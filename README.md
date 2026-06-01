@@ -44,7 +44,7 @@ The server resolves two values, in order:
 
 `VIKUNJA_URL` is the base API URL including `/api/v1` (e.g. `https://todo.example.com/api/v1`).
 
-Recommended so the shared `mcp.json` carries no secret:
+Recommended so the your `mcp.json` carries no secrets:
 
 - Drop a per-device file and lock it down:
   ```bash
