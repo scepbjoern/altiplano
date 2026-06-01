@@ -8,14 +8,31 @@ Filtering and sorting are passed straight to the Vikunja API (server-side), so t
 
 ## Tools
 
-- `list_projects`
+Projects:
+- `list_projects` (includes `parent_project_id`, shows sub-project nesting)
+- `create_project` (title, parent_project_id?, description?) — pass `parent_project_id` for a sub-project
+
+Tasks:
 - `list_tasks` (project_id, filter, sort_by, page, per_page)
 - `get_task` (task_id)
 - `create_task` (project_id, title, description?, priority?, due_date?)
 - `update_task` (task_id, title?, description?, done?, priority?)
+- `set_reminders` (task_id, reminders) — replaces the task's reminders with the given ISO 8601 datetimes; empty list clears
+
+Labels:
 - `list_labels`
 - `add_label` (task_id, label_id)
 - `remove_label` (task_id, label_id)
+
+Comments:
+- `list_comments` (task_id)
+- `add_comment` (task_id, comment)
+
+Assignees:
+- `search_users` (query) — find a `user_id` to assign
+- `list_assignees` (task_id)
+- `add_assignee` (task_id, user_id)
+- `remove_assignee` (task_id, user_id)
 
 ## Credentials (no secrets in mcp.json)
 
