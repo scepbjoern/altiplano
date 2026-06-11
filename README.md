@@ -15,8 +15,8 @@ Projects:
 Tasks:
 - `list_tasks` (project_id, filter, sort_by, page, per_page)
 - `get_task` (task_id)
-- `create_task` (project_id, title, description?, priority?, due_date?)
-- `update_task` (task_id, title?, description?, done?, priority?)
+- `create_task` (project_id, title, description?, priority?, due_date?, start_date?, end_date?)
+- `update_task` (task_id, title?, description?, done?, priority?, start_date?, end_date?)
 - `set_reminders` (task_id, reminders) — replaces the task's reminders with the given ISO 8601 datetimes; empty list clears
 
 Labels:
@@ -77,6 +77,7 @@ uvx altiplano                           # from PyPI
 ## Notes
 
 - Vikunja priority scale: 0 Unset, 1 Low, 2 Medium, 3 High, 4 Urgent, 5 DO NOW.
+- Dates are ISO 8601 datetimes. `start_date`/`end_date` mark the window you plan to work on a task (start work / finish work); `due_date` is the deadline.
 - The UI shows tasks by their project-local `identifier` (e.g. `#50`), which is not the global `id` the API uses.
 - Endpoint shapes (create via `PUT /projects/{id}/tasks`, update via `POST /tasks/{id}`) follow current Vikunja; adjust if your instance differs.
 

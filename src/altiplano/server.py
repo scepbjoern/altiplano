@@ -144,8 +144,15 @@ async def create_task(
     description: str | None = None,
     priority: int | None = None,
     due_date: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> dict:
-    """Create a task in a project."""
+    """Create a task in a project.
+
+    `start_date` and `end_date` are ISO 8601 datetimes marking the window you
+    plan to work on the task (start work / finish work), distinct from
+    `due_date` (the deadline).
+    """
     payload: dict[str, Any] = {"title": title}
     if description is not None:
         payload["description"] = description
@@ -153,6 +160,10 @@ async def create_task(
         payload["priority"] = priority
     if due_date is not None:
         payload["due_date"] = due_date
+    if start_date is not None:
+        payload["start_date"] = start_date
+    if end_date is not None:
+        payload["end_date"] = end_date
     return await _request("PUT", f"/projects/{project_id}/tasks", json=payload)
 
 
@@ -163,8 +174,14 @@ async def update_task(
     description: str | None = None,
     done: bool | None = None,
     priority: int | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> dict:
-    """Update a task. Only the fields you pass are changed. Use `done` to open/close it."""
+    """Update a task. Only the fields you pass are changed. Use `done` to open/close it.
+
+    `start_date` and `end_date` are ISO 8601 datetimes marking the window you
+    plan to work on the task (start work / finish work).
+    """
     payload: dict[str, Any] = {}
     if title is not None:
         payload["title"] = title
@@ -174,6 +191,10 @@ async def update_task(
         payload["done"] = done
     if priority is not None:
         payload["priority"] = priority
+    if start_date is not None:
+        payload["start_date"] = start_date
+    if end_date is not None:
+        payload["end_date"] = end_date
     if not payload:
         raise ValueError("No fields to update")
     return await _request("POST", f"/tasks/{task_id}", json=payload)
