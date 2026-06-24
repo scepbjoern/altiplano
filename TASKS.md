@@ -14,7 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| _(Beispiel: Antrag-Formular)_ | planned | [plan](docs/project/features/antrag-formular/plan-v001.md) | 2026-05-30 |
+| Testing & API-Mocks | planned | [plan](docs/project/features/testing-api-mocks/plan-v001.md) | 2026-06-24 |
 
 ## Abgeschlossene Features
 
