@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| list_projects Hex Color | planned | [plan](docs/project/features/list-projects-hex-color/plan-v001.md) | 2026-06-24 |
 
 ## Abgeschlossene Features
 
