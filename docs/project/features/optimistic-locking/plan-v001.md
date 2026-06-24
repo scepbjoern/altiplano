@@ -2,7 +2,7 @@
 
 ## Status
 
-**Feature-Status:** planned  
+**Feature-Status:** done  
 **Erstellt:** 2026-06-24  
 **Plan-Version:** v001  
 **Quelle:** User Request, PRD v005  
@@ -120,19 +120,22 @@ Dieses Pattern wird erweitert, um auch `updated` zu extrahieren.
 ## Step-by-Step Tasks
 
 ### Task 1: Projekt-Update anpassen
+- **Status:** done  
 - **Ziel:** `update_project` führt vorab GET aus und sendet `updated` mit.
 - **Implementierung:** GET auf `/projects/{project_id}` durchführen. `payload["updated"] = project["updated"]` setzen (falls vorhanden).
-- **Validierung:** Unit-Test schreiben.
+- **Validierung:** Unit-Test `test_tool_update_project` in `tests/test_server.py` geschrieben und erfolgreich ausgeführt (8/8 tests passed).
 
 ### Task 2: Task-Update-Tools anpassen
+- **Status:** done  
 - **Ziel:** `update_task`, `set_reminders`, `complete_task` und `move_task_to_project` führen vorab GET aus und senden `updated` mit.
 - **Implementierung:** Jeweils GET auf `/tasks/{task_id}` durchführen und `payload["updated"] = task["updated"]` in den POST-Payload integrieren.
-- **Validierung:** Unit-Tests schreiben.
+- **Validierung:** Unit-Tests für alle 4 Tools geschrieben und erfolgreich ausgeführt (10/10 passed).
 
 ### Task 3: Unit-Tests aktualisieren
+- **Status:** done  
 - **Ziel:** Alle Tests in `tests/test_server.py` laufen fehlerfrei durch und prüfen das Verhalten.
-- **Implementierung:** Mocking der GET-Requests in den entsprechenden Testfunktionen ergänzen.
-- **Validierung:** `uv run pytest`.
+- **Implementierung:** Mocking der GET-Requests in allen betroffenen Testfunktionen ergänzt. Neue Tests für `update_task` und `set_reminders` hinzugefügt.
+- **Validierung:** `uv run pytest` — 10/10 passed.
 
 ## Testing Strategy
 
@@ -147,9 +150,12 @@ Dieses Pattern wird erweitert, um auch `updated` zu extrahieren.
 uv run pytest
 ```
 
+**Ergebnis:** 10 passed in 0.38s ✅
+
 ## Acceptance Criteria
 
-- [ ] Alle Modifikations-Tools (Projekte & Tasks) implementieren das Optimistic Locking Pattern.
-- [ ] Keine Regressionen in anderen Tools.
-- [ ] Alle pytest-Tests sind erfolgreich.
-- [ ] Der 412-Fehler tritt bei Updates auf echten Instanzen nicht mehr auf.
+- [x] Alle Modifikations-Tools (Projekte & Tasks) implementieren das Optimistic Locking Pattern.
+- [x] Keine Regressionen in anderen Tools.
+- [x] Alle pytest-Tests sind erfolgreich.
+- [ ] Der 412-Fehler tritt bei Updates auf echten Instanzen nicht mehr auf. *(manuelle Validierung ausstehend)*
+
