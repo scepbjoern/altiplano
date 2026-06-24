@@ -93,22 +93,41 @@ def test_cloudflare_headers():
 @pytest.mark.anyio
 @patch("altiplano.server._request", new_callable=AsyncMock)
 async def test_tool_update_project(mock_request):
-    """Test the update_project tool with valid arguments."""
-    mock_request.return_value = {"id": 1, "title": "Updated Title", "hex_color": "00ff00"}
+    """Test that update_project merges caller changes onto the full current project."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/projects/1":
+            return {
+                "id": 1,
+                "title": "Old Title",
+                "description": "Old desc",
+                "hex_color": "aabbcc",
+                "parent_project_id": 0,
+                "updated": "2023-01-01T00:00:00Z",
+            }
+        if method == "POST" and path == "/projects/1":
+            return {"id": 1, "title": "Updated Title", "hex_color": "00ff00", "updated": "2023-01-01T00:00:00Z"}
+        return {}
+
+    mock_request.side_effect = mock_request_side_effect
 
     from altiplano.server import update_project
 
-    result = await update_project(
-        project_id=1,
-        title="Updated Title",
-        hex_color="00ff00"
-    )
+    result = await update_project(project_id=1, title="Updated Title", hex_color="00ff00")
 
-    assert result == {"id": 1, "title": "Updated Title", "hex_color": "00ff00"}
-    mock_request.assert_called_once_with(
+    assert result["id"] == 1
+    assert result["title"] == "Updated Title"
+    mock_request.assert_any_call("GET", "/projects/1")
+    # POST payload must include all fields (title mandatory) with changes overlaid
+    mock_request.assert_any_call(
         "POST",
         "/projects/1",
-        json={"title": "Updated Title", "hex_color": "00ff00"}
+        json={
+            "title": "Updated Title",       # changed
+            "description": "Old desc",      # carried over from GET
+            "hex_color": "00ff00",          # changed
+            "parent_project_id": 0,         # carried over from GET
+            "updated": "2023-01-01T00:00:00Z",
+        },
     )
 
 
@@ -125,24 +144,40 @@ async def test_tool_update_project_no_fields():
 @patch("altiplano.server._request", new_callable=AsyncMock)
 async def test_tool_complete_task(mock_request):
     """Test the complete_task tool without comment."""
-    mock_request.return_value = {"id": 1, "done": True}
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/tasks/1":
+            return {"id": 1, "title": "Test Task", "done": False, "updated": "2023-01-01T00:00:00Z"}
+        if method == "POST" and path == "/tasks/1":
+            return {"id": 1, "done": True, "updated": "2023-01-01T00:00:00Z"}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
     from altiplano.server import complete_task
     result = await complete_task(task_id=1)
-    assert result == {"id": 1, "done": True}
-    mock_request.assert_called_once_with("POST", "/tasks/1", json={"done": True})
+    assert result == {"id": 1, "done": True, "updated": "2023-01-01T00:00:00Z"}
+    mock_request.assert_any_call("GET", "/tasks/1")
+    mock_request.assert_any_call("POST", "/tasks/1", json={"done": True, "updated": "2023-01-01T00:00:00Z"})
 
 
 @pytest.mark.anyio
 @patch("altiplano.server._request", new_callable=AsyncMock)
 async def test_tool_complete_task_with_comment(mock_request):
     """Test the complete_task tool with a comment."""
-    mock_request.return_value = {"id": 1, "done": True}
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/tasks/1":
+            return {"id": 1, "title": "Test Task", "done": False, "updated": "2023-01-01T00:00:00Z"}
+        if method == "POST" and path == "/tasks/1":
+            return {"id": 1, "done": True, "updated": "2023-01-01T00:00:00Z"}
+        if method == "PUT" and path == "/tasks/1/comments":
+            return {"comment": "Finished this!"}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
     from altiplano.server import complete_task
     result = await complete_task(task_id=1, comment="Finished this!")
-    assert result == {"id": 1, "done": True, "comment_added": True}
+    assert result == {"id": 1, "done": True, "updated": "2023-01-01T00:00:00Z", "comment_added": True}
     
-    assert mock_request.call_count == 2
-    mock_request.assert_any_call("POST", "/tasks/1", json={"done": True})
+    assert mock_request.call_count == 3
+    mock_request.assert_any_call("GET", "/tasks/1")
+    mock_request.assert_any_call("POST", "/tasks/1", json={"done": True, "updated": "2023-01-01T00:00:00Z"})
     mock_request.assert_any_call("PUT", "/tasks/1/comments", json={"comment": "Finished this!"})
 
 
@@ -150,14 +185,53 @@ async def test_tool_complete_task_with_comment(mock_request):
 @patch("altiplano.server._request", new_callable=AsyncMock)
 async def test_tool_move_task_to_project(mock_request):
     """Test the move_task_to_project tool preserving done status."""
-    mock_request.side_effect = [
-        {"id": 1, "done": True},
-        {"id": 1, "project_id": 2, "done": True}
-    ]
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/tasks/1":
+            return {"id": 1, "done": True, "updated": "2023-01-01T00:00:00Z"}
+        if method == "POST" and path == "/tasks/1":
+            return {"id": 1, "project_id": 2, "done": True, "updated": "2023-01-01T00:00:00Z"}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
     from altiplano.server import move_task_to_project
     result = await move_task_to_project(task_id=1, project_id=2)
-    assert result == {"id": 1, "project_id": 2, "done": True}
+    assert result == {"id": 1, "project_id": 2, "done": True, "updated": "2023-01-01T00:00:00Z"}
     
     assert mock_request.call_count == 2
     mock_request.assert_any_call("GET", "/tasks/1")
-    mock_request.assert_any_call("POST", "/tasks/1", json={"project_id": 2, "done": True})
+    mock_request.assert_any_call("POST", "/tasks/1", json={"project_id": 2, "done": True, "updated": "2023-01-01T00:00:00Z"})
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_update_task(mock_request):
+    """Test the update_task tool including updated timestamp."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/tasks/1":
+            return {"id": 1, "title": "Old Title", "updated": "2023-01-01T00:00:00Z"}
+        if method == "POST" and path == "/tasks/1":
+            return {"id": 1, "title": "New Title", "updated": "2023-01-01T00:00:00Z"}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import update_task
+    result = await update_task(task_id=1, title="New Title")
+    assert result == {"id": 1, "title": "New Title", "updated": "2023-01-01T00:00:00Z"}
+    mock_request.assert_any_call("GET", "/tasks/1")
+    mock_request.assert_any_call("POST", "/tasks/1", json={"title": "New Title", "updated": "2023-01-01T00:00:00Z"})
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_set_reminders(mock_request):
+    """Test the set_reminders tool including updated timestamp."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/tasks/1":
+            return {"id": 1, "updated": "2023-01-01T00:00:00Z"}
+        if method == "POST" and path == "/tasks/1":
+            return {"id": 1, "reminders": [{"reminder": "2023-02-02T12:00:00Z"}], "updated": "2023-01-01T00:00:00Z"}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import set_reminders
+    result = await set_reminders(task_id=1, reminders=["2023-02-02T12:00:00Z"])
+    assert result["id"] == 1
+    mock_request.assert_any_call("GET", "/tasks/1")
+    mock_request.assert_any_call("POST", "/tasks/1", json={"reminders": [{"reminder": "2023-02-02T12:00:00Z"}], "updated": "2023-01-01T00:00:00Z"})
