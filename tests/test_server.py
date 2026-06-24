@@ -28,7 +28,9 @@ async def test_mcp_initialization():
         "list_assignees",
         "add_assignee",
         "remove_assignee",
-        "update_project"
+        "update_project",
+        "complete_task",
+        "move_task_to_project"
     ]
     
     for tool in expected_tools:
@@ -117,3 +119,45 @@ async def test_tool_update_project_no_fields():
 
     with pytest.raises(ValueError, match="No fields to update"):
         await update_project(project_id=1)
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_complete_task(mock_request):
+    """Test the complete_task tool without comment."""
+    mock_request.return_value = {"id": 1, "done": True}
+    from altiplano.server import complete_task
+    result = await complete_task(task_id=1)
+    assert result == {"id": 1, "done": True}
+    mock_request.assert_called_once_with("POST", "/tasks/1", json={"done": True})
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_complete_task_with_comment(mock_request):
+    """Test the complete_task tool with a comment."""
+    mock_request.return_value = {"id": 1, "done": True}
+    from altiplano.server import complete_task
+    result = await complete_task(task_id=1, comment="Finished this!")
+    assert result == {"id": 1, "done": True, "comment_added": True}
+    
+    assert mock_request.call_count == 2
+    mock_request.assert_any_call("POST", "/tasks/1", json={"done": True})
+    mock_request.assert_any_call("PUT", "/tasks/1/comments", json={"comment": "Finished this!"})
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_move_task_to_project(mock_request):
+    """Test the move_task_to_project tool preserving done status."""
+    mock_request.side_effect = [
+        {"id": 1, "done": True},
+        {"id": 1, "project_id": 2, "done": True}
+    ]
+    from altiplano.server import move_task_to_project
+    result = await move_task_to_project(task_id=1, project_id=2)
+    assert result == {"id": 1, "project_id": 2, "done": True}
+    
+    assert mock_request.call_count == 2
+    mock_request.assert_any_call("GET", "/tasks/1")
+    mock_request.assert_any_call("POST", "/tasks/1", json={"project_id": 2, "done": True})

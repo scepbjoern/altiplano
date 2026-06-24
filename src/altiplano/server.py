@@ -244,6 +244,28 @@ async def set_reminders(task_id: int, reminders: list[str]) -> dict:
     return await _request("POST", f"/tasks/{task_id}", json=payload)
 
 
+@mcp.tool()
+async def complete_task(task_id: int, comment: str | None = None) -> dict:
+    """Mark a task as done. This is a safe convenience wrapper for update_task.
+
+    If a `comment` is provided, it is added to the task comments.
+    """
+    res = await _request("POST", f"/tasks/{task_id}", json={"done": True})
+    if comment:
+        await _request("PUT", f"/tasks/{task_id}/comments", json={"comment": comment})
+        res["comment_added"] = True
+    return res
+
+
+@mcp.tool()
+async def move_task_to_project(task_id: int, project_id: int) -> dict:
+    """Move a task to another project. This is a safe convenience wrapper for update_task."""
+    # Fetch current task state to preserve done status
+    task = await _request("GET", f"/tasks/{task_id}")
+    is_done = task.get("done", False)
+    return await _request("POST", f"/tasks/{task_id}", json={"project_id": project_id, "done": is_done})
+
+
 # --- labels -----------------------------------------------------------------
 ##
 @mcp.tool()

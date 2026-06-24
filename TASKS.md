@@ -19,6 +19,7 @@
 
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| Task Security Tools | [plan](docs/project/features/task-security-tools/plan-v001.md) | 2026-06-24 |
 | list_projects Hex Color | [plan](docs/project/features/list-projects-hex-color/plan-v001.md) | 2026-06-24 |
 | update_project Tool | [plan](docs/project/features/update-project/plan-v001.md) | 2026-06-24 |
 | Testing & API-Mocks | [plan](docs/project/features/testing-api-mocks/plan-v001.md) | 2026-06-24 |
