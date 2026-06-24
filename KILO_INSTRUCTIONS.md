@@ -48,7 +48,10 @@ tests/                  # pytest Unit- und Integrationstests
 
 ## Testing (pytest)
 
-**Pflicht:** Bei jedem neuen Tool oder Feature automatisch den zugehörigen Unit- oder Integrationstest schreiben.
+**Brownfield-Pragmatismus (Pflicht):** 
+1. Bei jedem **neuen oder geänderten** Tool zwingend Unit- oder Integrationstests (inkl. API-Mocks) schreiben.
+2. Bestehende, unveränderte Alt-Funktionen müssen nicht lückenlos nachgetestet werden, um den MVP-Start nicht zu verzögern.
+3. Echte API-Requests an Vikunja sind in Tests strikt verboten (alles via `httpx`-Mocks abfangen).
 
 ### pytest – `tests/`
 - **Was:** Tool-Ausführungslogik, API-Client-Mocks, Request/Response-Transformationen

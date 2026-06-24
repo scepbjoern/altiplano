@@ -37,6 +37,13 @@ Da es sich bei Altiplano um ein Python-Projekt handelt, verwenden wir **pytest**
 2. **Tool-Handler:** Wir prüfen, ob die MCP-Tools (z.B. `list_tasks`, `create_task`) die Argumente korrekt validieren, an die API-Funktionen weitergeben und die API-Antworten in das richtige MCP-Format konvertieren.
 3. **Fehlerbehandlung:** Wir stellen sicher, dass Verbindungsfehler, ungültige Tokens oder nicht gefundene Ressourcen (HTTP 404) sauber abgefangen und als verständliche Fehlermeldungen an den Client zurückgegeben werden.
 
+### Pragmatischer Brownfield-Ansatz
+
+Da wir auf einem bestehenden Basiscode (Brownfield) aufbauen, gilt für das Testing folgende Priorisierung:
+1. **Neue Features absichern:** Für jedes neu entwickelte oder massgeblich veränderte Tool (z. B. `update_project`) schreiben wir strikte Unit-/Integrationstests.
+2. **Altlasten akzeptieren:** Bestehende, unveränderte Funktionen müssen vorerst nicht lückenlos nachgetestet werden, um den MVP-Start nicht zu verzögern. Erst wenn alter Code für neue Features refactored wird, werden Tests nachgezogen.
+3. **Mocks sind Pflicht:** Es dürfen keine echten Requests gegen die persönliche Vikunja-Instanz in der Test-Suite ausgeführt werden! Alle `httpx`-Aufrufe müssen sauber abgefangen (gemockt) werden.
+
 ### Tests ausführen
 
 Tests werden im PIV-Loop **automatisch durch den AI Agent** ausgeführt. Falls ihr sie selbst starten möchtet:
