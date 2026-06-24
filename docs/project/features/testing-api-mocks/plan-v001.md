@@ -2,7 +2,7 @@
 
 ## Status
 
-**Feature-Status:** planned  
+**Feature-Status:** done  
 **Erstellt:** 2026-06-24  
 **Plan-Version:** v001
 **Quelle:** User Request (`/plan-feature Testing & API-Mocks`) und PRD v003  
@@ -113,7 +113,7 @@ Begründung: Es ist die pragmatischste Lösung (Brownfield-Ansatz). Wir müssen 
 
 ### Task 1: UPDATE `tests/test_server.py`
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Mock-Pattern etablieren und einen Test für `list_projects` schreiben.  
 **IMPLEMENT:** 
 - Importiere `patch` und `AsyncMock` aus `unittest.mock`.
@@ -127,11 +127,11 @@ Begründung: Es ist die pragmatischste Lösung (Brownfield-Ansatz). Wir müssen 
 **IMPORTS:** `from unittest.mock import patch, AsyncMock`, `from altiplano.server import list_projects`.  
 **GOTCHA:** Da das Tool in FastMCP registriert ist, rufen wir für Unittests direkt die asynchrone Python-Funktion `list_projects` auf.  
 **ACCEPTANCE CRITERIA:**
-- [ ] `_request` wird erfolgreich gemockt.
-- [ ] Test für `list_projects` ist grün und erreicht keine echte API.
+- [x] `_request` wird erfolgreich gemockt.
+- [x] Test für `list_projects` ist grün und erreicht keine echte API.
 
 **VALIDATE:**
-- `uv run pytest tests/test_server.py`
+- `uv run pytest tests/test_server.py` (Erfolgreich ausgeführt: 2 Tests bestanden)
 
 ## Testing Strategy
 
@@ -153,9 +153,9 @@ uv run pytest
 
 ## Completion Checklist
 
-- [ ] Alle Tasks sind umgesetzt
-- [ ] Jeder Task wurde validiert
-- [ ] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt
+- [x] Alle Tasks sind umgesetzt
+- [x] Jeder Task wurde validiert
+- [x] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt
 
 ## Offene Fragen
 
