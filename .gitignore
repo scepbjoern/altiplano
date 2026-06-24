@@ -6,3 +6,7 @@ build/
 *.egg-info/
 .env
 .uv/
+
+# Junction to .agents/skills so Claude Code discovers the same skills as
+# KiloCode. Keep .agents/skills as the single tracked source of truth.
+.claude/skills/
