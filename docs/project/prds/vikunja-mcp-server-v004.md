@@ -1,14 +1,15 @@
 # 1. Executive Summary
 - **System:** Vikunja MCP Server (Altiplano-Fork)
-- **Dokumentversion:** v004
+- **Dokumentversion:** v005
 - **Kurzbeschreibung:** Ein sicherer, leichtgewichtiger Model Context Protocol (MCP) Server, der als Schnittstelle zwischen KI-Agenten (wie Codex, Claude, ChatGPT) und einer selbst gehosteten Vikunja-Instanz fungiert.
 - **Zweck:** KI-gestütztes Aufgabenmanagement in der persönlichen Vikunja-Instanz, um effizient Projekte zu pflegen, Aufgaben zu erfassen, zu priorisieren und zu verschieben.
-- **MVP-Ziel:** Lokaler, sicherer Zugriff (via `stdio`) auf grundlegende Lese- und Schreiboperationen für Aufgaben (inkl. Filtern, Daten, Kommentaren), Projekte und Labels in Vikunja, wobei sichergestellt ist, dass keine destruktiven Operationen (Löschen) durch die KI ausgeführt werden können. Optionaler Support für Cloudflare Access Service-Tokens.
+- **MVP-Ziel:** Lokaler, sicherer Zugriff (via `stdio`) auf grundlegende Lese- und Schreiboperationen für Aufgaben (inkl. Filtern, Daten, Kommentaren), Projekte und Labels in Vikunja, wobei sichergestellt ist, dass keine destruktiven Operationen (Löschen) durch die KI ausgeführt werden können. Optionaler Support für Cloudflare Access Service-Tokens und optimistische Konkurrenzsteuerung (Optimistic Locking) zur Vermeidung von 412-Fehlern.
 - **Ausbaustufen:** Remote HTTP MCP-Endpunkt für ChatGPT, Kanban-Buckets, Dateianhänge, Task-Beziehungen und erweiterte Tools wie Personenzuweisungen (Assignees) für die spätere kollaborative Nutzung, sowie strikt abgesicherte Löschfunktionen.
 
 # 2. Änderungshistorie
 | Version | Datum | Anlass | Kurzbeschreibung |
 |---|---|---|---|
+| v005 | 2026-06-24 | Optimistic Locking | Optimistisches Sperren (updated-Zeitstempel) für Projekt- und Task-Updates eingeführt, um 412-Fehler zu vermeiden |
 | v004 | 2026-06-24 | Cloudflare Access Support | Support für Cloudflare Service Token Header (CF-Access-Client-Id, CF-Access-Client-Secret) im MVP ergänzt |
 | v003 | 2026-06-24 | PRD Update | Mocking-Setup als Chore-Feature an Priorität 1 hinzugefügt, um sicheres Testing zu gewährleisten |
 | v002 | 2026-06-24 | Review Integration | Erkenntnisse aus r01 eingearbeitet (Datenmodell, Fehlerbehandlung, Tool-Abgrenzung) |
@@ -52,6 +53,7 @@
 - [ ] Projekte: Farben (`hex_color`) bei `list_projects` in der Rückgabe ergänzen (Ausgabe bleibt schlank).
 - [ ] Projekte: Neues Tool zum Aktualisieren (`update_project`) inkl. Name, Beschreibung, Farbe und Verschachtelung (`parent_project_id`). Archivierung (`is_archived`) ist nicht Teil des Scopes.
 - [ ] Task Sicherheit: Dediziertes Tool `complete_task` als sicherer Convenience-Wrapper sowie ein sicheres Tool `move_task_to_project`.
+- [ ] Optimistic Locking / Concurrency: Abfangen von 412-Fehlern (Precondition Failed) bei Updates von Projekten und Tasks durch Mitschicken des aktuellen `updated`-Zeitstempels (mittels vorherigem GET-Request).
 
 ### Medium-Version
 - [ ] Assignees: Personenzuweisungen aktiv nutzen (Code ist bereits vorhanden, fachliche Nutzung erst ab Einbezug der Partnerin).
@@ -150,6 +152,7 @@ Das Projekt ist ein Brownfield-Fork von `aichholzer/altiplano`. Der technische S
 | Typ | Beschreibung | Auswirkung | Umgang |
 |---|---|---|---|
 | Risiko | Unbeabsichtigtes Überschreiben von Task-Daten bei Updates. | Hoch | `update_task` und `update_project` dürfen nur die spezifisch übergebenen Parameter per PATCH/POST ändern, nicht das ganze Objekt ersetzen. |
+| Risiko | 412 Precondition Failed-Fehler bei Updates wegen fehlendem Optimistic Locking. | Hoch | Alle Update-Tools müssen vorab einen GET-Request machen, um den aktuellen `updated`-Zeitstempel abzufragen und mitzusenden. |
 | Risiko | Infrastruktur-Aufwand Remote HTTP MCP | Mittel | Ein Remote MCP-Endpunkt mit Docker und Reverse Proxy zieht Auth-Verantwortlichkeiten nach sich (Zero Trust / Cloudflare im Einsatz). Erst in der Medium-Phase relevant. |
 | Annahme | Vikunja API unterstützt Update von Projekt-Farbe (`hex_color`). | Mittel | Doku/Code prüfen. Falls nicht unterstützt, Scope anpassen. |
 | Annahme | Vikunja API Handling von `move_task_to_project`. | Mittel | Existiert ein dedizierter Endpunkt, oder reicht ein POST auf den Task mit neuer `project_id`? Bei der Implementierung prüfen. |
@@ -160,6 +163,7 @@ Das Projekt ist ein Brownfield-Fork von `aichholzer/altiplano`. Der technische S
 |---|---|---|---|---|
 | Testing & API-Mocks | Setup von sauberen `httpx`-Mocks für lokale, sichere Testausführung ohne echte API-Calls. | MVP (Chore) | pytest, httpx. | 1 |
 | Cloudflare Access Support | Support für Cloudflare Service Token Header (CF-Access-Client-Id, CF-Access-Client-Secret) im MVP. | MVP (Enhancement) | httpx, server.py. | 1b |
+| Optimistic Locking | Abfangen von 412-Fehlern bei Updates durch Mitschicken des `updated`-Zeitstempels (Projekte und Tasks). | MVP | httpx, server.py. | 1c |
 | `update_project` Tool | Neues Tool zum Ändern von Projektname, Farbe und Verschachtelung. | MVP | Vikunja API. | 2 |
 | Projekt-Ausbau | `list_projects` um Farbrückgabe ergänzen. | MVP | Vikunja API. | 3 |
 | Task Sicherheits-Tools | Dediziertes `complete_task` (Convenience-Wrapper) und `move_task_to_project`. | MVP | Task-Methoden. | 4 |
