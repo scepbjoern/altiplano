@@ -108,6 +108,8 @@ async def list_projects() -> list[dict]:
             "parent_project_id": p.get("parent_project_id", 0),
             "is_archived": p.get("is_archived", False),
             "hex_color": p.get("hex_color", ""),
+            "identifier": p.get("identifier", ""),
+            "description": p.get("description", ""),
         }
         for p in (data or [])
     ]
@@ -118,13 +120,19 @@ async def create_project(
     title: str,
     parent_project_id: int | None = None,
     description: str | None = None,
+    hex_color: str | None = None,
 ) -> dict:
-    """Create a project. Pass `parent_project_id` to create it as a sub-project."""
+    """Create a project. Pass `parent_project_id` to create it as a sub-project.
+
+    Use `hex_color` to set a custom color (e.g. "ff0000").
+    """
     payload: dict[str, Any] = {"title": title}
     if parent_project_id is not None:
         payload["parent_project_id"] = parent_project_id
     if description is not None:
         payload["description"] = description
+    if hex_color is not None:
+        payload["hex_color"] = hex_color
     return await _request("PUT", "/projects", json=payload)
 
 
@@ -246,32 +254,47 @@ async def update_task(
     `start_date` and `end_date` are ISO 8601 datetimes marking the window you
     plan to work on the task (start work / finish work).
     """
-    payload: dict[str, Any] = {}
+    # Build dict of only caller-supplied changes (non-None values).
+    changes: dict[str, Any] = {}
     if title is not None:
-        payload["title"] = title
+        changes["title"] = title
     if description is not None:
-        payload["description"] = description
+        changes["description"] = description
     if done is not None:
-        payload["done"] = done
+        changes["done"] = done
     if priority is not None:
-        payload["priority"] = priority
+        changes["priority"] = priority
     if start_date is not None:
-        payload["start_date"] = start_date
+        changes["start_date"] = start_date
     if end_date is not None:
-        payload["end_date"] = end_date
-    if not payload:
+        changes["end_date"] = end_date
+    if not changes:
         raise ValueError("No fields to update")
+
+    # Vikunja's POST /tasks/{id} requires all fields (title is mandatory).
+    # Fetch current state and overlay our changes on top.
     task = await _request("GET", f"/tasks/{task_id}")
+    payload: dict[str, Any] = {
+        "title": task["title"],
+        "description": task.get("description", ""),
+        "done": task.get("done", False),
+        "priority": task.get("priority", 0),
+        "due_date": task.get("due_date"),
+        "start_date": task.get("start_date"),
+        "end_date": task.get("end_date"),
+    }
     if "updated" in task:
         payload["updated"] = task["updated"]
+    payload.update(changes)
+
     return await _request("POST", f"/tasks/{task_id}", json=payload)
 
 
 @mcp.tool()
 async def set_reminders(task_id: int, reminders: list[str]) -> dict:
     """Replace a task's reminders with the given ISO 8601 datetimes. Empty list clears them."""
-    payload = {"reminders": [{"reminder": r} for r in reminders]}
     task = await _request("GET", f"/tasks/{task_id}")
+    payload: dict[str, Any] = {"title": task["title"], "reminders": [{"reminder": r} for r in reminders]}
     if "updated" in task:
         payload["updated"] = task["updated"]
     return await _request("POST", f"/tasks/{task_id}", json=payload)
@@ -284,7 +307,7 @@ async def complete_task(task_id: int, comment: str | None = None) -> dict:
     If a `comment` is provided, it is added to the task comments.
     """
     task = await _request("GET", f"/tasks/{task_id}")
-    payload: dict[str, Any] = {"done": True}
+    payload: dict[str, Any] = {"title": task["title"], "done": True}
     if "updated" in task:
         payload["updated"] = task["updated"]
     res = await _request("POST", f"/tasks/{task_id}", json=payload)
@@ -300,7 +323,7 @@ async def move_task_to_project(task_id: int, project_id: int) -> dict:
     # Fetch current task state to preserve done status
     task = await _request("GET", f"/tasks/{task_id}")
     is_done = task.get("done", False)
-    payload: dict[str, Any] = {"project_id": project_id, "done": is_done}
+    payload: dict[str, Any] = {"title": task["title"], "project_id": project_id, "done": is_done}
     if "updated" in task:
         payload["updated"] = task["updated"]
     return await _request("POST", f"/tasks/{task_id}", json=payload)

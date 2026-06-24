@@ -14,12 +14,12 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| Task- & Projekt-Tool-Fixes | planned | [plan](docs/project/features/task-project-tool-fixes/plan-v001.md) | 2026-06-24 |
 
 ## Abgeschlossene Features
 
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| Task- & Projekt-Tool-Fixes | [plan](docs/project/features/task-project-tool-fixes/plan-v001.md) | 2026-06-24 |
 | Optimistic Locking | [plan](docs/project/features/optimistic-locking/plan-v001.md) | 2026-06-24 |
 | Task Security Tools | [plan](docs/project/features/task-security-tools/plan-v001.md) | 2026-06-24 |
 | list_projects Hex Color | [plan](docs/project/features/list-projects-hex-color/plan-v001.md) | 2026-06-24 |

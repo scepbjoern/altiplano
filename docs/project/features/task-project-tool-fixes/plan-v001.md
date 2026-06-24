@@ -2,7 +2,7 @@
 
 ## Status
 
-**Feature-Status:** planned  
+**Feature-Status:** done  
 **Erstellt:** 2026-06-24  
 **Plan-Version:** v001
 **Quelle:** User Request (Implementierungsplan "Fix: update_task Payload, Fehlende Felder in Projekt-Tools"), PRD v006  
@@ -164,7 +164,9 @@ Wichtig: Tasks top-to-bottom ausführen. Jeder Task ist atomic und einzeln valid
 
 ### Task 1: UPDATE update_task — vollständiges GET-Overlay-Pattern
 
-**Status:** planned  
+**Status:** done
+
+**Validierung:** `uv run pytest` — 12/12 Tests grün. Test 1: `update_task` mit Titel-Änderung sendet vollständigen Basis-Payload. Test 2 (neu): `update_task` mit nur Description-Änderung sendet trotzdem `title`.  
 **Ziel:** `update_task` sendet bei jedem Update ein vollständiges Pflichtfeld-Set (inkl. `title`), analog zu `update_project`.  
 **IMPLEMENT:** In `src/altiplano/server.py` die Funktion `update_task` umbauen: explizite Parameter zunächst in ein `changes`-Dict sammeln (wie bisher), dann per `GET /tasks/{task_id}` den aktuellen Task laden und daraus einen Basis-`payload` bauen: `{"title": task["title"], "description": task.get("description", ""), "done": task.get("done", False), "priority": task.get("priority", 0), "due_date": task.get("due_date"), "start_date": task.get("start_date"), "end_date": task.get("end_date")}`. `updated` weiterhin bedingt ergänzen (`if "updated" in task`). Danach `payload.update(changes)` und mit diesem `payload` den `POST`-Request ausführen.  
 **PATTERN:** `update_project` in `server.py` (Zeilen 131-170) — identische Struktur (changes sammeln, GET, Basis-Payload bauen, overlay, POST).  
@@ -181,7 +183,9 @@ Wichtig: Tasks top-to-bottom ausführen. Jeder Task ist atomic und einzeln valid
 
 ### Task 2: UPDATE set_reminders, complete_task, move_task_to_project — title ergänzen
 
-**Status:** planned  
+**Status:** done
+
+**Validierung:** `uv run pytest` — 12/12 Tests grün. Alle drei Tools senden jetzt `title` im POST-Payload, auch wenn nur einzelne Felder wie Erinnerungen, done-Status oder Projekt-ID geändert werden.  
 **Ziel:** Alle drei Tools senden `title` aus der bereits vorhandenen GET-Antwort im Payload mit.  
 **IMPLEMENT:** In `src/altiplano/server.py`:
 - `set_reminders`: Payload-Dict um `"title": task["title"]` ergänzen (Reihenfolge: `{"title": task["title"], "reminders": [...]}`).
@@ -202,7 +206,9 @@ Alle drei Tools führen bereits ein `GET /tasks/{task_id}` aus (für `updated`/`
 
 ### Task 3: UPDATE list_projects, create_project — fehlende Felder ergänzen
 
-**Status:** planned  
+**Status:** done
+
+**Validierung:** `uv run pytest` — 12/12 Tests grün. `list_projects` gibt jetzt `description` und `identifier` pro Projekt aus. `create_project` akzeptiert neuen optionalen Parameter `hex_color` und sendet ihn im Payload.  
 **Ziel:** `list_projects` gibt `description`/`identifier` zurück; `create_project` kann `hex_color` setzen.  
 **IMPLEMENT:** In `src/altiplano/server.py`:
 - `list_projects`: Rückgabe-Dict um `"identifier": p.get("identifier", "")` und `"description": p.get("description", "")` ergänzen.
@@ -222,7 +228,9 @@ Alle drei Tools führen bereits ein `GET /tasks/{task_id}` aus (für `updated`/`
 
 ### Task 4: UPDATE tests/test_server.py
 
-**Status:** planned  
+**Status:** done
+
+**Validierung:** `uv run pytest` — 12/12 Tests grün. Alle bestehenden Tests laufen erfolgreich mit aktualisierten Mock-Responses. Neuer Test `test_tool_create_project` validiert `hex_color` Parameter. Tests für `update_task`, `set_reminders`, `complete_task`, `move_task_to_project` verifizieren, dass `title` im Payload enthalten ist.  
 **Ziel:** Alle Änderungen aus Task 1-3 sind durch Tests abgedeckt; alle bestehenden Tests laufen weiterhin grün.  
 **IMPLEMENT:**
 - `test_tool_update_task`: GET-Mock um `description`, `done`, `priority` ergänzen; POST-Assertion prüft vollständigen Basis-Payload mit überlagertem `title`. Einen zweiten Testfall ergänzen, der nur `description` übergibt und prüft, dass `title` trotzdem im POST-Payload enthalten ist.
@@ -300,6 +308,14 @@ uv run pytest
 ## Documentation Notes
 
 Nach Abschluss sollen `user-guide.md` und `developer-notes.md` im Feature-Ordner `docs/project/features/task-project-tool-fixes/` ergänzt werden (via `/document`). Inhaltlich relevant: Hinweis, dass Task-Update-Tools jetzt immer vollständige Pflichtfelder senden, und dass `list_projects`/`create_project` um `description`/`identifier`/`hex_color` erweitert wurden.
+
+## Documentation Results
+
+**Status:** done (2026-06-24)
+
+Dokumentation erstellt:
+- `user-guide.md`: Endanwenderdokumentation mit Überblick, MCP-Tools-Tabelle, Demo-Szenarien und bekannten Einschränkungen.
+- `developer-notes.md`: Technische Dokumentation mit Architektur, Datenfluss, GET-Overlay-Pattern-Erklärung, Validierungsergebnisse und Wartungshinweise.
 
 ## Notes and Trade-offs
 
