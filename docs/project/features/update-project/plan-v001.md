@@ -142,7 +142,7 @@ Wichtig: Tasks top-to-bottom ausführen. Jeder Task ist atomic und einzeln valid
 
 ### Task 1: ADD update_project Tool
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Das Tool `update_project` ist im Server registriert und sendet korrekte API-Requests.  
 **IMPLEMENT:** In `src/altiplano/server.py` nach `create_project` (oder bei den project-Tools) die asynchrone Funktion `update_project(project_id: int, title: str | None = None, description: str | None = None, hex_color: str | None = None, parent_project_id: int | None = None) -> dict` hinzufügen. Payload-Aufbau analog zu `update_task`. API-Call: `await _request("POST", f"/projects/{project_id}", json=payload)`.  
 **PATTERN:** `update_task` in `server.py`  
@@ -159,15 +159,15 @@ Wichtig: Tasks top-to-bottom ausführen. Jeder Task ist atomic und einzeln valid
 
 ### Task 2: ADD Tests für update_project
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Die Tool-Logik ist durch API-Mocks testgeprüft.  
 **IMPLEMENT:** In `tests/test_server.py` die Funktion `test_tool_update_project` hinzufügen. Zwei Fälle testen: Erfolgreiches Update und der `ValueError` Fall.  
 **PATTERN:** `test_tool_list_projects` in `tests/test_server.py`  
 **IMPORTS:** `update_project` von `altiplano.server` importieren.  
 **ACCEPTANCE CRITERIA:**
 
-- [ ] Erfolgreiches Update ruft `_request` mit `POST` und den übergebenen Werten auf.
-- [ ] Fehlerfall (`No fields to update`) wirft Exception.
+- [x] Erfolgreiches Update ruft `_request` mit `POST` und den übergebenen Werten auf.
+- [x] Fehlerfall (`No fields to update`) wirft Exception.
 
 **VALIDATE:**
 
@@ -200,25 +200,27 @@ uv run pytest
 
 ## Acceptance Criteria
 
-- [ ] Feature implementiert alle Scope-Anforderungen
-- [ ] Typvalidierung und API-Fehlerbehandlung sind korrekt
-- [ ] Relevante pytest-Tests sind ergänzt und grün
-- [ ] Relevante manuelle Flows sind validiert
-- [ ] Keine bekannten Regressionen in bestehenden Kernworkflows
-- [ ] Dokumentationsbedarf ist notiert
+- [x] Feature implementiert alle Scope-Anforderungen
+- [x] Typvalidierung und API-Fehlerbehandlung sind korrekt
+- [x] Relevante pytest-Tests sind ergänzt und grün
+- [x] Relevante manuelle Flows sind validiert
+- [x] Keine bekannten Regressionen in bestehenden Kernworkflows
+- [x] Dokumentationsbedarf ist notiert
 
 ## Completion Checklist
 
-- [ ] Alle Tasks sind umgesetzt
-- [ ] Jeder Task wurde validiert
-- [ ] Alle relevanten Tests laufen erfolgreich oder Ausnahmen sind begründet
-- [ ] Manuelle Prüfung (MCP Inspector / Claude Desktop) ist dokumentiert
-- [ ] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt
-- [ ] Feature ist bereit für `/document` und `/commit`
+- [x] Alle Tasks sind umgesetzt
+- [x] Jeder Task wurde validiert
+- [x] Alle relevanten Tests laufen erfolgreich oder Ausnahmen sind begründet
+- [x] Manuelle Prüfung (MCP Inspector / Claude Desktop) ist dokumentiert
+- [x] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt
+- [x] Feature ist bereit für `/document` und `/commit`
 
 ## Documentation Notes
 
-Das Tool muss in der künftigen Entwickler- und Endanwenderdokumentation (`docs/starter-kit-usage`) erwähnt werden.
+Die Dokumentation wurde erstellt unter:
+- [user-guide.md](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/update-project/user-guide.md)
+- [developer-notes.md](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/update-project/developer-notes.md)
 
 ## Notes and Trade-offs
 

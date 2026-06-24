@@ -27,7 +27,8 @@ async def test_mcp_initialization():
         "search_users",
         "list_assignees",
         "add_assignee",
-        "remove_assignee"
+        "remove_assignee",
+        "update_project"
     ]
     
     for tool in expected_tools:
@@ -84,3 +85,34 @@ def test_cloudflare_headers():
         assert headers["Authorization"] == "Bearer fake-token"
         assert headers["CF-Access-Client-Id"] == "fake-cf-id"
         assert headers["CF-Access-Client-Secret"] == "fake-cf-secret"
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_update_project(mock_request):
+    """Test the update_project tool with valid arguments."""
+    mock_request.return_value = {"id": 1, "title": "Updated Title", "hex_color": "00ff00"}
+
+    from altiplano.server import update_project
+
+    result = await update_project(
+        project_id=1,
+        title="Updated Title",
+        hex_color="00ff00"
+    )
+
+    assert result == {"id": 1, "title": "Updated Title", "hex_color": "00ff00"}
+    mock_request.assert_called_once_with(
+        "POST",
+        "/projects/1",
+        json={"title": "Updated Title", "hex_color": "00ff00"}
+    )
+
+
+@pytest.mark.anyio
+async def test_tool_update_project_no_fields():
+    """Test that update_project raises ValueError if no fields are provided."""
+    from altiplano.server import update_project
+
+    with pytest.raises(ValueError, match="No fields to update"):
+        await update_project(project_id=1)

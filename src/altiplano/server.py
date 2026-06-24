@@ -115,6 +115,33 @@ async def create_project(
     return await _request("PUT", "/projects", json=payload)
 
 
+@mcp.tool()
+async def update_project(
+    project_id: int,
+    title: str | None = None,
+    description: str | None = None,
+    hex_color: str | None = None,
+    parent_project_id: int | None = None,
+) -> dict:
+    """Update a project. Only the fields you pass are changed.
+
+    Use `hex_color` to set a custom color (e.g. "ff0000").
+    Use `parent_project_id` to nest the project or set to 0 to make it a root project.
+    """
+    payload: dict[str, Any] = {}
+    if title is not None:
+        payload["title"] = title
+    if description is not None:
+        payload["description"] = description
+    if hex_color is not None:
+        payload["hex_color"] = hex_color
+    if parent_project_id is not None:
+        payload["parent_project_id"] = parent_project_id
+    if not payload:
+        raise ValueError("No fields to update")
+    return await _request("POST", f"/projects/{project_id}", json=payload)
+
+
 # --- tasks ------------------------------------------------------------------
 ##
 @mcp.tool()
