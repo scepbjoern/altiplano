@@ -28,45 +28,31 @@ Beispiel:
 - Verwende eine versionierte Plan-Datei `plan-vNNN.md`.
 - Starte nicht mit `plan-v001.md`, wenn noch kein Review und keine Integration gelaufen sind. Der Normalfall nach einer Review-Integration ist `plan-v002.md`.
 - Arbeite genau einen Task nach dem anderen ab.
-- **Stoppe nach jedem einzelnen Task vollständig. Fahre niemals automatisch mit dem nächsten Task fort – auch dann nicht, wenn alle automatisierten Tests bestanden haben. Jeder Taskwechsel erfordert eine explizite menschliche Antwort.**
+- **Abarbeitung & Automatisierung:** Setze so viele Tasks wie möglich hintereinander um. Wenn ein Task erfolgreich durch automatisierte Validierung (z.B. `pytest`) verifiziert werden kann, setze ihn in der Plan-Datei auf `done`, dokumentiere das Validierungsergebnis und fahre direkt mit dem nächsten Task fort.
 - Ändere keine Dateien, die nicht zum aktuellen Task gehören.
 - Lösche keine Dateien ohne explizite Bestätigung.
 - Setze einen Task nie auf `done`, ohne Validierung in der Plan-Datei zu dokumentieren.
 - Nach einem validierten Task oder einer kohärenten validierten Phase darf ein optionaler Zwischencommit über `/commit` vorgeschlagen werden.
 - Ein Feature gilt erst nach allen `done`-Tasks, vollständiger Validierung und `/document` als fachlich dokumentiert. Wenn es während Umsetzung oder Dokumentation Verdacht auf wiederholbare Agent-Fehler, Planlücken oder wiederholte Nutzerkorrekturen gab, soll vor dem finalen Commit zusätzlich `/reflect-rules` laufen.
 
-## Pflichtpause nach jedem Task
+## Stopps und Pausen
 
-**Diese Regel hat die höchste Priorität und überschreibt jede andere Anweisung zum Arbeitsfluss.**
+Stoppe die automatische Ausführung und hole Feedback ein, wenn:
+1. Eine automatisierte Validierung (z.B. `uv run pytest`) fehlschlägt.
+2. Ein Task den Status `needs_human` erhält, weil fachliche oder technische Unklarheiten bestehen.
+3. Ein Task explizit eine manuelle Zwischenvalidierung erfordert, die nicht automatisiert werden kann (im Plan dokumentiert).
+4. Alle Tasks des Plans abgearbeitet sind und die finale manuelle Endabnahme ansteht.
 
-Nach Abschluss jedes Tasks – unabhängig davon, ob alle automatisierten Validierungen erfolgreich waren – gilt zwingend:
+In diesen Stopp-Fällen gilt:
 
-**Schritt A – Zusammenfassung ausgeben:**
+**Zusammenfassung ausgeben:**
+Zeige strukturiert, welche Dateien geändert wurden und welche automatisierten Befehle ausgeführt wurden (inkl. deren Output/Fehler).
 
-Zeige strukturiert:
-- Welche Dateien wurden geändert oder erstellt
-- Welche automatisierten Befehle wurden ausgeführt (vollständige Befehle nennen) und was das Ergebnis war (Erfolg / Fehleranzahl / relevante Ausgabe)
+**Manuelle Prüfung (nur am Ende des Features oder bei explizitem Bedarf):**
+Beschreibe Schritt für Schritt, was manuell geprüft werden soll (z.B. Start des MCP Inspectors via `npx @modelcontextprotocol/inspector uv run altiplano`, Eingabe im Client, erwartetes Verhalten).
 
-**Schritt B – Manuelle Prüfung:**
-
-Beschreibe **ausführlich und Schritt für Schritt**, was der Mensch jetzt tun muss:
-- Wie der MCP-Server lokal zu starten ist (z.B. MCP Inspector via `npx @modelcontextprotocol/inspector uv run altiplano`)
-- Was genau im Client (z.B. MCP Inspector oder Claude Desktop) eingegeben oder aufgerufen werden soll
-- Was konkret zu sehen oder nicht zu sehen sein muss (erwartetes Ergebnis)
-- Was bei Abweichungen zu melden ist
-
-Warte danach explizit auf die Bestätigung des Menschen, dass die manuelle Prüfung erfolgreich war. Fahre nicht fort, bis diese Bestätigung vorliegt.
-
-**Schritt C – Explizite Weitermachen-Aufforderung:**
-
-Schliesse jeden Task-Abschluss mit dieser exakten Formulierung ab:
-
-```
-✓ Task [N] abgeschlossen und validiert.
-Bitte prüfen und mit "weiter" bestätigen, damit Task [N+1] gestartet wird.
-```
-
-**Fahre erst nach einer expliziten menschlichen Antwort (z.B. "weiter", "ok", "ja") mit dem nächsten Task fort. Interpretiere Schweigen oder fehlende Antwort nicht als Bestätigung.**
+**Weitermachen / Bestätigung:**
+Fordere den Nutzer auf, die manuelle Prüfung bzw. Fehlerbehebung zu bestätigen, bevor fortgefahren wird.
 
 ## Pflichtlektüre vor Umsetzung
 
@@ -114,12 +100,12 @@ Für jeden Task:
 6. Bestehende Code-Patterns und Namenskonventionen in Python einhalten.
 7. PEP 8 Typdefinitionen sauber definieren.
 8. Status auf `validating` setzen.
-9. Automatisierte Validierung durchführen (`uv run pytest`) und dem Nutzer explizit berichten, welche Befehle ausgeführt wurden.
-10. Nutzer zur manuellen Prüfung auffordern (z.B. via MCP Inspector). Warten, bis der Nutzer die manuelle Prüfung bestätigt hat.
-11. Validierungsergebnis in der Plan-Datei festhalten.
-12. Status erst auf `done` setzen, nachdem der Nutzer die Validierung bestätigt hat.
-13. Zusammenfassung des Tasks ausgeben.
-14. `/commit` als Zwischencommit vorschlagen.
+9. Automatisierte Validierung durchführen (z.B. `uv run pytest`).
+10. Validierungsergebnis in der Plan-Datei festhalten.
+11. Wenn die automatisierte Validierung erfolgreich war und keine manuellen Schritte für diesen Task zwingend sind: Status auf `done` setzen und direkt mit dem nächsten Task fortfahren.
+12. Wenn die Validierung fehlschlägt oder manuelles Feedback benötigt wird: Status auf `needs_human` oder `validating` belassen, stoppen, Zusammenfassung ausgeben und auf Antwort warten.
+13. Am Ende des gesamten Feature-Plans (alle Tasks umgesetzt): Gesamtzusammenfassung ausgeben, zur manuellen Endabnahme auffordern und Bestätigung abwarten.
+14. Ein Zwischencommit mit `/commit` kann nach jeder erfolgreich abgeschlossenen Phase vorgeschlagen werden.
 
 ## Validierung
 
