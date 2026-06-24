@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| update_project Tool | planned | [plan](docs/project/features/update-project/plan-v001.md) | 2026-06-24 |
 
 ## Abgeschlossene Features
 
