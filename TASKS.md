@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| Task- & Projekt-Tool-Fixes | planned | [plan](docs/project/features/task-project-tool-fixes/plan-v001.md) | 2026-06-24 |
 
 ## Abgeschlossene Features
 
