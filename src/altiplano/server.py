@@ -95,6 +95,7 @@ async def list_projects() -> list[dict]:
             "title": p["title"],
             "parent_project_id": p.get("parent_project_id", 0),
             "is_archived": p.get("is_archived", False),
+            "hex_color": p.get("hex_color", ""),
         }
         for p in (data or [])
     ]

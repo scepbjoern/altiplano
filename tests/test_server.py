@@ -41,7 +41,7 @@ async def test_tool_list_projects(mock_request):
     """Test the list_projects tool using API mocks."""
     # Set mock response for the _request call
     mock_request.return_value = [
-        {"id": 1, "title": "Test Project", "parent_project_id": 0, "is_archived": False}
+        {"id": 1, "title": "Test Project", "parent_project_id": 0, "is_archived": False, "hex_color": "00ff00"}
     ]
     
     result = await list_projects()
@@ -53,6 +53,7 @@ async def test_tool_list_projects(mock_request):
             "title": "Test Project",
             "parent_project_id": 0,
             "is_archived": False,
+            "hex_color": "00ff00",
         }
     ]
     

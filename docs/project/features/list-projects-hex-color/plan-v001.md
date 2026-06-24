@@ -2,7 +2,7 @@
 
 ## Status
 
-**Feature-Status:** planned  
+**Feature-Status:** done  
 **Erstellt:** 2026-06-24  
 **Plan-Version:** v001
 **Quelle:** docs/project/prds/vikunja-mcp-server-v004.md (Kapitel 6 & 15)  
@@ -144,7 +144,7 @@ Anpassung von `tests/test_server.py` und Ausführung von `pytest`.
 
 ### Task 1: UPDATE src/altiplano/server.py
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** `hex_color` dem Return-Dictionary von `list_projects` hinzufügen.  
 **IMPLEMENT:** In der List-Comprehension innerhalb von `list_projects` das Feld `"hex_color": p.get("hex_color", ""),` ergänzen.  
 **PATTERN:** `.get("is_archived", False)` als Vorbild für sicheres Dictionary-Lesen.  
@@ -152,15 +152,15 @@ Anpassung von `tests/test_server.py` und Ausführung von `pytest`.
 **GOTCHA:** Keine.  
 **ACCEPTANCE CRITERIA:**
 
-- [ ] Das Tool gibt das Feld `hex_color` zurück.
+- [x] Das Tool gibt das Feld `hex_color` zurück.
 
 **VALIDATE:**
 
-- `uv run pytest`
+- `uv run pytest` (Fehlschlag erwartet, da test_server.py noch nicht aktualisiert wurde)
 
 ### Task 2: UPDATE tests/test_server.py
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Den Test `test_tool_list_projects` an die neue Ausgabe anpassen.  
 **IMPLEMENT:** Im Mock-Return für `mock_request` ein `"hex_color": "00ff00"` (oder ähnlich) ergänzen. Im abschließenden `assert result == [...]` ebenfalls das `hex_color` Feld erwarten.  
 **PATTERN:** Bestehendes Mocking-Pattern aus `test_tool_list_projects`.  
@@ -168,7 +168,7 @@ Anpassung von `tests/test_server.py` und Ausführung von `pytest`.
 **GOTCHA:** Beide Dictionaries (Mock-Input und expected Output) müssen übereinstimmen.  
 **ACCEPTANCE CRITERIA:**
 
-- [ ] `test_server.py` beinhaltet `hex_color` in der Validierung für `list_projects`.
+- [x] `test_server.py` beinhaltet `hex_color` in der Validierung für `list_projects`.
 
 **VALIDATE:**
 
@@ -204,25 +204,27 @@ uv run pytest
 
 ## Acceptance Criteria
 
-- [ ] Feature implementiert alle Scope-Anforderungen
-- [ ] Typvalidierung und API-Fehlerbehandlung sind korrekt
-- [ ] Relevante pytest-Tests sind ergänzt und grün
-- [ ] Relevante manuelle Flows sind validiert
-- [ ] Keine bekannten Regressionen in bestehenden Kernworkflows
-- [ ] Dokumentationsbedarf ist notiert
+- [x] Feature implementiert alle Scope-Anforderungen
+- [x] Typvalidierung und API-Fehlerbehandlung sind korrekt
+- [x] Relevante pytest-Tests sind ergänzt und grün
+- [x] Relevante manuelle Flows sind validiert
+- [x] Keine bekannten Regressionen in bestehenden Kernworkflows
+- [x] Dokumentationsbedarf ist notiert
 
 ## Completion Checklist
 
-- [ ] Alle Tasks sind umgesetzt
-- [ ] Jeder Task wurde validiert
-- [ ] Alle relevanten Tests laufen erfolgreich oder Ausnahmen sind begründet
-- [ ] Manuelle Prüfung (MCP Inspector / Claude Desktop) ist dokumentiert
-- [ ] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt
-- [ ] Feature ist bereit für `/document` und `/commit`
+- [x] Alle Tasks sind umgesetzt
+- [x] Jeder Task wurde validiert
+- [x] Alle relevanten Tests laufen erfolgreich oder Ausnahmen sind begründet
+- [x] Manuelle Prüfung (MCP Inspector / Claude Desktop) ist dokumentiert
+- [x] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt
+- [x] Feature ist bereit für `/document` und `/commit`
 
 ## Documentation Notes
 
-Nach der Implementierung sollte das `list_projects` Tool in etwaigen Beispielen mit dem neuen Feld `hex_color` erwähnt werden.
+Die abschließende Dokumentation wurde erstellt:
+- [User Guide](user-guide.md)
+- [Developer Notes](developer-notes.md)
 
 ## Notes and Trade-offs
 

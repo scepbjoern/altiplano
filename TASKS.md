@@ -14,12 +14,12 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| list_projects Hex Color | planned | [plan](docs/project/features/list-projects-hex-color/plan-v001.md) | 2026-06-24 |
 
 ## Abgeschlossene Features
 
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| list_projects Hex Color | [plan](docs/project/features/list-projects-hex-color/plan-v001.md) | 2026-06-24 |
 | update_project Tool | [plan](docs/project/features/update-project/plan-v001.md) | 2026-06-24 |
 | Testing & API-Mocks | [plan](docs/project/features/testing-api-mocks/plan-v001.md) | 2026-06-24 |
 | Cloudflare Access Support | [plan](docs/project/features/cloudflare-service-token/plan-v001.md) | 2026-06-24 |
