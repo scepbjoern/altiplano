@@ -36,24 +36,29 @@ Assignees:
 
 ## Credentials (no secrets in mcp.json)
 
-The server resolves two values, in order:
+The server resolves these values, in order:
 
-1. Environment variables `VIKUNJA_URL` and `VIKUNJA_API_TOKEN`.
+1. Environment variables (`VIKUNJA_URL`, `VIKUNJA_API_TOKEN`, and optionally `CF_CLIENT_ID`, `CF_CLIENT_SECRET`).
 2. A per-device file of `KEY=VALUE` lines, default `~/.config/altiplano/env`
    (override the path with `ALTIPLANO_CONFIG`).
 
 `VIKUNJA_URL` is the base API URL including `/api/v1` (e.g. `https://todo.example.com/api/v1`).
 
-Recommended so the your `mcp.json` carries no secrets:
+### Cloudflare Access (Optional)
+If your Vikunja instance is secured behind Cloudflare Access (Zero Trust), you can provide:
+- `CF_CLIENT_ID` (maps to header `CF-Access-Client-Id`)
+- `CF_CLIENT_SECRET` (maps to header `CF-Access-Client-Secret`)
+
+Recommended configuration so your `mcp.json` carries no secrets:
 
 - Drop a per-device file and lock it down:
   ```bash
   mkdir -p ~/.config/altiplano
-  printf 'VIKUNJA_URL=https://todo.example.com/api/v1\nVIKUNJA_API_TOKEN=tk_xxx\n' > ~/.config/altiplano/env
+  printf 'VIKUNJA_URL=https://todo.example.com/api/v1\nVIKUNJA_API_TOKEN=tk_xxx\nCF_CLIENT_ID=xxx\nCF_CLIENT_SECRET=xxx\n' > ~/.config/altiplano/env
   chmod 600 ~/.config/altiplano/env
   ```
 - Or inject via the launcher's environment (e.g. a systemd unit `EnvironmentFile=` pointing at a `chmod 600` file), which the server inherits.
-- For stronger setups, source the token from a secret manager/keychain at launch and export it into the environment.
+- For stronger setups, source the tokens from a secret manager/keychain at launch and export them into the environment.
 
 Then `mcp.json` only needs the command, no `env` block, no plain-text secrets:
 

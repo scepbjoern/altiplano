@@ -57,3 +57,30 @@ async def test_tool_list_projects(mock_request):
     
     # Assert _request was called correctly
     mock_request.assert_called_once_with("GET", "/projects")
+
+
+def test_cloudflare_headers():
+    """Verify that Cloudflare Access Service Token headers are appended when configured."""
+    from altiplano.server import _headers
+
+    # Case 1: No Cloudflare config
+    with patch("altiplano.server._conf", side_effect=lambda key: "fake-token" if key == "VIKUNJA_API_TOKEN" else None):
+        headers = _headers()
+        assert "Authorization" in headers
+        assert "CF-Access-Client-Id" not in headers
+        assert "CF-Access-Client-Secret" not in headers
+
+    # Case 2: Cloudflare config is present
+    def mock_conf(key):
+        values = {
+            "VIKUNJA_API_TOKEN": "fake-token",
+            "CF_CLIENT_ID": "fake-cf-id",
+            "CF_CLIENT_SECRET": "fake-cf-secret"
+        }
+        return values.get(key)
+
+    with patch("altiplano.server._conf", side_effect=mock_conf):
+        headers = _headers()
+        assert headers["Authorization"] == "Bearer fake-token"
+        assert headers["CF-Access-Client-Id"] == "fake-cf-id"
+        assert headers["CF-Access-Client-Secret"] == "fake-cf-secret"

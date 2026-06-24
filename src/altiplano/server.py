@@ -52,7 +52,16 @@ def _headers() -> dict[str, str]:
     token = _conf("VIKUNJA_API_TOKEN")
     if not token:
         raise RuntimeError("VIKUNJA_API_TOKEN is not set (env or ~/.config/altiplano/env)")
-    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    
+    cf_id = _conf("CF_CLIENT_ID")
+    cf_secret = _conf("CF_CLIENT_SECRET")
+    if cf_id:
+        headers["CF-Access-Client-Id"] = cf_id
+    if cf_secret:
+        headers["CF-Access-Client-Secret"] = cf_secret
+        
+    return headers
 
 
 async def _request(method: str, path: str, **kwargs: Any) -> Any:

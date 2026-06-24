@@ -14,9 +14,11 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| Testing & API-Mocks | planned | [plan](docs/project/features/testing-api-mocks/plan-v001.md) | 2026-06-24 |
 
 ## Abgeschlossene Features
 
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| Testing & API-Mocks | [plan](docs/project/features/testing-api-mocks/plan-v001.md) | 2026-06-24 |
+| Cloudflare Access Support | [plan](docs/project/features/cloudflare-service-token/plan-v001.md) | 2026-06-24 |
+
