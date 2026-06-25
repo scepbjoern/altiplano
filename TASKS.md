@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| Dateianhänge | planned | [plan](docs/project/features/dateianhaenge/plan-v002.md) | 2026-06-25 |
 
 ## Abgeschlossene Features
 
