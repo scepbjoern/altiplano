@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| Remote HTTP MCP | planned | [plan](docs/project/features/remote-http-mcp/plan-v002.md) | 2026-06-25 |
 
 ## Abgeschlossene Features
 
