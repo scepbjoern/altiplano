@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| Task-Beziehungen | planned | [plan](docs/project/features/task-beziehungen/plan-v001.md) | 2026-06-25 |
 
 ## Abgeschlossene Features
 
