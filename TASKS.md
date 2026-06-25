@@ -14,7 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| OAuth 2.1 Authentifizierung | planned | [plan](docs/project/features/oauth-authentication/plan-v002.md) | 2026-06-25 |
+| OAuth 2.1 Authentifizierung | planned | [plan](docs/project/features/oauth-authentication/plan-v003.md) | 2026-06-25 |
 
 ## Abgeschlossene Features
 
