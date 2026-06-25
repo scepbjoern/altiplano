@@ -9,6 +9,7 @@
 # 2. Änderungshistorie
 | Version | Datum | Anlass | Kurzbeschreibung |
 |---|---|---|---|
+| v006 | 2026-06-25 | Feature-Planung | "Task Löschen" zu "Allgemeines Löschen" (Tasks, Kommentare, Buckets) erweitert. |
 | v006 | 2026-06-25 | Feature-Planung | Dateianhang-Feature für Remote-Homelab-Betrieb angepasst: Base64-Upload (<= 2MB), URL-Upload und Frontend-Links für manuelle Uploads bei > 2MB. Löschen von Anhängen aufgenommen. |
 | v006 | 2026-06-25 | Datenmodell-Präzisierung | Bucket-Datenmodell (Kapitel 8/9) präzisiert: Buckets sind Objekte der Projekt-Kanban-View (nicht direkt am Projekt), mit Feldern `project_view_id` statt `project_id`, sowie `limit`/`count`/`position`. Gegen echte Vikunja-Instanz (v2.3.0) verifiziert. |
 | v006 | 2026-06-24 | Fehlerkorrektur | Payload-Fix für `update_task`, `set_reminders`, `complete_task`, `move_task_to_project` (fehlendes Pflichtfeld `title`) sowie fehlende Felder (`description`, `identifier` in `list_projects`; `hex_color` in `create_project`) ergänzt |
@@ -68,7 +69,7 @@
 - [ ] Bulk-Limits: Harte technische Grenzen (max 5-10 Tasks) für Schreib-Aktionen (Updates/Moves). Lesezugriffe bleiben unlimitiert.
 
 ### Extended-/Luxus-Version
-- [ ] Task Löschen: Destruktive Delete-Operation für unbenötigte Tasks, welche zwingend an einen separaten, expliziten Bestätigungs-Step des Users gebunden sein muss.
+- [ ] Allgemeines Löschen (Tasks, Kommentare, Buckets): Destruktive Delete-Operationen für unbenötigte Tasks, Kommentare und Kanban-Buckets, welche zwingend an einen separaten, expliziten Bestätigungs-Step des Users gebunden sein müssen.
 - [ ] Task-Beziehungen: Relationen zwischen Tasks (z. B. Subtasks, Blockaden) abbilden.
 - [ ] Inbox Capture Workflows, Natural Language Task Parser.
 - [ ] Eigene UI-Komponente (ChatGPT Connector).
@@ -90,7 +91,7 @@
 | US-4 | Als Nutzer möchte ich Aufgaben kommentieren, die Beschreibung anpassen und Tasks in ein anderes Projekt verschieben, ohne dass das Update an einem fehlenden Pflichtfeld scheitert. | MVP | `update_task`, `add_comment` und `move_task_to_project` funktionieren auch bei Teil-Updates (z.B. nur `description`), ohne `2002`-Fehler. |
 | US-5 | Als Nutzer möchte ich Kanban Buckets anlegen und Tasks dorthin schieben. | Medium | API Call für Bucket-Zuweisung klappt. |
 | US-6 | Als Nutzer möchte ich Dateien an Tasks anhängen (bis 2MB direkt via Base64, ansonsten per Download-URL oder manuellem Upload via Direktlink) sowie Anhänge auflisten und löschen. | Medium | Dateianhänge sind in Vikunja UI sichtbar, können gelistet und gelöscht werden. |
-| US-7 | Als Nutzer möchte ich veraltete Tasks komplett löschen können, aber mit einer Sicherheits-Bestätigung. | Extended | `delete_task` verlangt explizites "Ja". |
+| US-7 | Als Nutzer möchte ich veraltete Tasks, Kommentare und Kanban-Buckets komplett löschen können, aber mit einer Sicherheits-Bestätigung. | Extended | `delete_task`, `delete_comment` und `delete_bucket` verlangen explizites "Ja". |
 | US-8 | Als Administrator möchte ich, dass der MCP-Server Verbindungen über ein Cloudflare Access Service Token authentifizieren kann. | MVP | Der Server übergibt die konfigurierten Header `CF-Access-Client-Id` und `CF-Access-Client-Secret` bei API-Requests. |
 
 # 8. Kernfunktionen
@@ -154,7 +155,7 @@ Das Projekt ist ein Brownfield-Fork von `aichholzer/altiplano`. Der technische S
 | Cloudflare Access Bypass | MCP-Server führt Befehl aus, umgeht CF-Access-Sperre mittels Service Token. | US-8 | MVP | API-Calls gelingen trotz vorgeschaltetem Cloudflare Access Schutz. |
 | Kanban-Ansicht strukturieren | User bittet, in Projekt Z Kanban-Spalten (Buckets) anzulegen und Tasks einzuordnen. | US-5 | Medium | Buckets existieren und Tasks liegen in der korrekten Spalte. |
 | Anhänge verwalten | User bittet, eine Datei (entweder als Base64 <=2MB oder per Download-URL) anzuhängen, Anhänge zu listen oder zu löschen. | US-6 | Medium | Datei ist als Anhang verfügbar, wird gelistet oder gelöscht. Bei lokalen Dateien >2MB wird ein Direktlink zum Task ausgegeben. |
-| Absicherung Löschung | User fordert das Löschen von Task X. | US-7 | Extended | Tool verlangt explizite Bestätigung, erst danach wird gelöscht. |
+| Absicherung Löschung | User fordert das Löschen von Task X, einem Kommentar oder einem Bucket. | US-7 | Extended | Tool verlangt explizite Bestätigung, erst danach wird gelöscht. |
 
 # 14. Risiken, Annahmen und offene Fragen
 | Typ | Beschreibung | Auswirkung | Umgang |
@@ -180,7 +181,7 @@ Das Projekt ist ein Brownfield-Fork von `aichholzer/altiplano`. Der technische S
 | Kanban Buckets | Tools für Buckets (`create_bucket`, `update_bucket`) und Task-Zuweisung. | Medium | Vikunja API. | 5 |
 | Dateianhänge | Tools für Dateianhänge (`list_task_attachments`, `delete_task_attachment`, `get_task_frontend_url`, `upload_task_attachment_base64`, `upload_task_attachment_from_url`). | Medium | Vikunja API (Multipart-Form). | 6 |
 | Remote HTTP MCP | Docker-Setup und HTTP-Transport (SSE) einrichten. | Medium | Reverse Proxy, Auth. | 7 |
-| Task Löschen | Tool zum Löschen mit striktem zweistufigen Bestätigungs-Pattern. | Extended | Bestätigungs-Pattern. | 8 |
+| Allgemeines Löschen | Tools zum Löschen von Tasks, Kommentaren und Buckets mit striktem zweistufigen Bestätigungs-Pattern. | Extended | Bestätigungs-Pattern. | 8 |
 | Task-Beziehungen | Tool zum Setzen von Relationen (Parent/Child, Blockaden). | Extended | Vikunja API. | 9 |
 
 # 16. Appendix
