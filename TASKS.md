@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| Kanban Buckets | planned | [plan](docs/project/features/kanban-buckets/plan-v001.md) | 2026-06-25 |
 
 ## Abgeschlossene Features
 
