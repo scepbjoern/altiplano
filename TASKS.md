@@ -14,12 +14,12 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| Task-Beziehungen | planned | [plan](docs/project/features/task-beziehungen/plan-v001.md) | 2026-06-25 |
 
 ## Abgeschlossene Features
 
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| Task-Beziehungen | [plan](docs/project/features/task-beziehungen/plan-v001.md) | 2026-06-25 |
 | Allgemeines Löschen | [plan](docs/project/features/allgemeines-loeschen/plan-v001.md) | 2026-06-25 |
 | Dateianhänge | [plan](docs/project/features/dateianhaenge/plan-v002.md) | 2026-06-25 |
 | Kanban Buckets | [plan](docs/project/features/kanban-buckets/plan-v001.md) | 2026-06-25 |

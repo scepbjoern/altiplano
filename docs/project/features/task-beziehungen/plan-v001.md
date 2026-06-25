@@ -2,7 +2,7 @@
 
 ## Status
 
-**Feature-Status:** planned  
+**Feature-Status:** done  
 **Erstellt:** 2026-06-25  
 **Plan-Version:** v001
 **Quelle:** User Request (`/plan-feature Task-Beziehungen`), PRD v006 (Extended-/Luxus-Version)  
@@ -136,7 +136,7 @@ Schreiben der `pytest` Mocks und lokale Ausführung von `uv run pytest`.
 
 ### Task 1: UPDATE server.py mit Relations-Tools
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Drei neue Tools in `server.py` registrieren.  
 **IMPLEMENT:**
 1. Füge `@mcp.tool()` `list_task_relations(task_id: int) -> dict` hinzu. Implementierung ruft `GET /tasks/{task_id}` auf und extrahiert das Feld `related_tasks`.
@@ -145,26 +145,27 @@ Schreiben der `pytest` Mocks und lokale Ausführung von `uv run pytest`.
 **PATTERN:** Orientierung an `add_label` / `remove_label`.  
 **GOTCHA:** `list_task_relations` muss beachten, dass `related_tasks` ggf. `null` oder nicht vorhanden ist.  
 **ACCEPTANCE CRITERIA:**
-- [ ] Tools sind in `server.py` definiert.
-- [ ] Klare Docstrings in Englisch.
+- [x] Tools sind in `server.py` definiert.
+- [x] Klare Docstrings in Englisch.
 
 **VALIDATE:**
 - Manuelle Prüfung durch MCP Inspector: Tools werden gelistet.
+- **Automatische Prüfung:** Mocks in `test_server.py` erstellt und verifiziert.
 
 ### Task 2: UPDATE test_server.py mit Mocks für Relations
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Tests für die drei neuen Tools schreiben.  
 **IMPLEMENT:** 
 - Erstelle `test_tool_list_task_relations`, `test_tool_add_task_relation`, `test_tool_remove_task_relation` mit `AsyncMock` für `_request`.
 - Erweitere `test_mcp_initialization`, sodass die neuen Tools im Tool-Namen-Array erwartet werden.
 **PATTERN:** Orientierung an `test_tool_add_label`.  
 **ACCEPTANCE CRITERIA:**
-- [ ] 3 neue Tests in `test_server.py`.
-- [ ] `test_mcp_initialization` ist aktualisiert.
+- [x] 3 neue Tests in `test_server.py`.
+- [x] `test_mcp_initialization` ist aktualisiert.
 
 **VALIDATE:**
-- `uv run pytest` (Muss 100% grün sein).
+- `uv run pytest` (Muss 100% grün sein). -> Alle 30 Tests bestanden.
 
 ## Validation Commands
 
@@ -182,20 +183,22 @@ uv run pytest
 
 ## Acceptance Criteria
 
-- [ ] Feature implementiert alle Scope-Anforderungen.
-- [ ] Typvalidierung und API-Fehlerbehandlung sind korrekt.
-- [ ] Relevante pytest-Tests sind ergänzt und grün.
+- [x] Feature implementiert alle Scope-Anforderungen.
+- [x] Typvalidierung und API-Fehlerbehandlung sind korrekt.
+- [x] Relevante pytest-Tests sind ergänzt und grün.
 
 ## Completion Checklist
 
-- [ ] Alle Tasks sind umgesetzt.
-- [ ] Jeder Task wurde validiert.
-- [ ] Alle Tests laufen erfolgreich.
-- [ ] Feature ist bereit für `/document` und `/commit`.
+- [x] Alle Tasks sind umgesetzt.
+- [x] Jeder Task wurde validiert.
+- [x] Alle Tests laufen erfolgreich.
+- [x] Feature ist bereit für `/document` und `/commit`.
 
 ## Documentation Notes
 
-Das Feature "Task-Beziehungen" soll in einem eigenen Dokument in `docs/project/features/task-beziehungen/` oder im Starter Kit als User Guide dokumentiert werden (welche relation_kinds unterstützt Vikunja?).
+Das Feature "Task-Beziehungen" wurde erfolgreich in diesen Dateien dokumentiert:
+* [user-guide.md](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/task-beziehungen/user-guide.md)
+* [developer-notes.md](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/task-beziehungen/developer-notes.md)
 
 ## Offene Fragen
 
