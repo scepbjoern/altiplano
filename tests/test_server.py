@@ -761,4 +761,68 @@ async def test_tool_remove_task_relation(mock_request):
     mock_request.assert_called_once_with("DELETE", "/tasks/1/relations/subtask/2")
 
 
+def test_main_transport_selection(monkeypatch):
+    """Test that main() correctly selects transport and configures FastMCP settings."""
+    from altiplano.server import main, mcp
+
+    # Save original settings to restore them after the test
+    orig_host = mcp.settings.host
+    orig_port = mcp.settings.port
+    orig_allowed_hosts = list(mcp.settings.transport_security.allowed_hosts)
+    orig_dns_rebinding = mcp.settings.transport_security.enable_dns_rebinding_protection
+
+    try:
+        # Case 1: Default stdio
+        monkeypatch.delenv("MCP_TRANSPORT", raising=False)
+        monkeypatch.delenv("FASTMCP_HOST", raising=False)
+        monkeypatch.delenv("FASTMCP_PORT", raising=False)
+        monkeypatch.delenv("FASTMCP_ALLOWED_HOSTS", raising=False)
+        monkeypatch.delenv("FASTMCP_DISABLE_DNS_REBINDING", raising=False)
+
+        with patch.object(mcp, "run") as mock_run:
+            main()
+            mock_run.assert_called_once_with()
+
+        # Case 2: SSE transport with custom host and port
+        monkeypatch.setenv("MCP_TRANSPORT", "sse")
+        monkeypatch.setenv("FASTMCP_HOST", "0.0.0.0")
+        monkeypatch.setenv("FASTMCP_PORT", "9000")
+        monkeypatch.setenv("FASTMCP_ALLOWED_HOSTS", "test.local, api.test.local")
+        monkeypatch.setenv("FASTMCP_DISABLE_DNS_REBINDING", "true")
+
+        with patch.object(mcp, "run") as mock_run:
+            main()
+            mock_run.assert_called_once_with(transport="sse")
+            assert mcp.settings.host == "0.0.0.0"
+            assert mcp.settings.port == 9000
+            assert "test.local" in mcp.settings.transport_security.allowed_hosts
+            assert "api.test.local" in mcp.settings.transport_security.allowed_hosts
+            assert mcp.settings.transport_security.enable_dns_rebinding_protection is False
+
+        # Case 3: Streamable HTTP transport
+        monkeypatch.setenv("MCP_TRANSPORT", "streamable-http")
+        monkeypatch.setenv("FASTMCP_HOST", "127.0.0.1")
+        monkeypatch.setenv("FASTMCP_PORT", "8888")
+        monkeypatch.setenv("FASTMCP_DISABLE_DNS_REBINDING", "false")
+
+        # Let's reset the rebinding protection first to test changing it back
+        mcp.settings.transport_security.enable_dns_rebinding_protection = True
+
+        with patch.object(mcp, "run") as mock_run:
+            main()
+            mock_run.assert_called_once_with(transport="streamable-http")
+            assert mcp.settings.host == "127.0.0.1"
+            assert mcp.settings.port == 8888
+            # (Note: "false" does not disable it, so it should stay True)
+            assert mcp.settings.transport_security.enable_dns_rebinding_protection is True
+
+    finally:
+        # Restore original settings
+        mcp.settings.host = orig_host
+        mcp.settings.port = orig_port
+        mcp.settings.transport_security.allowed_hosts = orig_allowed_hosts
+        mcp.settings.transport_security.enable_dns_rebinding_protection = orig_dns_rebinding
+
+
+
 

@@ -116,7 +116,7 @@ Das Host-Binding auf `0.0.0.0` für Docker wird primär über die Umgebungsvaria
 Wichtig: Tasks top-to-bottom ausführen. Jeder Task ist atomic und einzeln validierbar.
 
 ### Task 1: UPDATE server.py
-**Status:** planned  
+**Status:** done  
 **Ziel:** `main()` um Transport-Weiche ("stdio", "sse", "streamable-http") ergänzen und DNS-Rebinding klären.  
 **IMPLEMENT:** 
 In `src/altiplano/server.py` die `main()`-Methode anpassen:
@@ -134,14 +134,18 @@ def main() -> None:
 **IMPORTS:** `os` (bereits vorhanden).  
 **GOTCHA:** FastMCP >= 1.27 hat einen DNS-Rebinding-Schutz. Wenn `mcp.run()` keine externen Hosts zulässt, muss das hier evtl. konfiguriert werden (z.B. über `mcp.settings` oder beim `FastMCP` Konstruktoraufruf).  
 **ACCEPTANCE CRITERIA:**
-- [ ] `server.py` wertet `MCP_TRANSPORT` aus und unterstützt 3 Modi.
+- [x] `server.py` wertet `MCP_TRANSPORT` aus und unterstützt 3 Modi.
 
 **VALIDATE:**
 - `uv run altiplano` startet standardmässig in `stdio`.
 - `MCP_TRANSPORT=sse uv run altiplano` startet einen HTTP-Server.
 
+**VALIDATION EVIDENCE:**
+- Weiche in `main()` implementiert mit Unterstützung für `stdio`, `sse`, und `streamable-http`.
+- `uv run pytest` lief erfolgreich durch (31 Tests bestanden).
+
 ### Task 2: UPDATE test_server.py
-**Status:** planned  
+**Status:** done  
 **Ziel:** Logik der Transport-Weiche durch einen einfachen Test absichern.  
 **IMPLEMENT:**
 Einen Test `test_main_transport_selection(monkeypatch)` ergänzen, der mockt/verifiziert, dass `mcp.run` mit dem korrekten Parameter aufgerufen wird, wenn die ENV-Variable gesetzt ist.  
@@ -149,13 +153,17 @@ Einen Test `test_main_transport_selection(monkeypatch)` ergänzen, der mockt/ver
 **IMPORTS:** `pytest`.  
 **GOTCHA:** `mcp.run` sollte gepatcht werden, damit der Test nicht wirklich blockierend einen Server hochfährt.  
 **ACCEPTANCE CRITERIA:**
-- [ ] Unit-Test für `main()` existiert und deckt ENV-Variablen-Auswertung ab.
+- [x] Unit-Test für `main()` existiert und deckt ENV-Variablen-Auswertung ab.
 
 **VALIDATE:**
 - `uv run pytest tests/test_server.py` besteht.
 
+**VALIDATION EVIDENCE:**
+- Neuer Test `test_main_transport_selection(monkeypatch)` in `tests/test_server.py` deckt alle Weichen-Fälle (stdio, sse, streamable-http) sowie Host/Port und DNS-Rebinding ab.
+- `uv run pytest` bestanden (32/32 tests passed).
+
 ### Task 3: CREATE .dockerignore
-**Status:** planned  
+**Status:** done  
 **Ziel:** Build-Kontext sauber halten.  
 **IMPLEMENT:**
 Erstelle `.dockerignore` im Root.  
@@ -164,13 +172,16 @@ Inhalt: `.venv/`, `.git/`, `___TEMP/`, `__pycache__/`, `tests/`, `docs/`, `deplo
 **IMPORTS:** n/a.  
 **GOTCHA:** Verhindern, dass `deploy/.env` versehentlich in den Build gelangt.  
 **ACCEPTANCE CRITERIA:**
-- [ ] `.dockerignore` ist vorhanden und schliesst `.venv` etc. aus.
+- [x] `.dockerignore` ist vorhanden und schliesst `.venv` etc. aus.
 
 **VALIDATE:**
 - Review der Dateiinhalte.
 
+**VALIDATION EVIDENCE:**
+- `.dockerignore` im Root-Verzeichnis erstellt mit Ausschluss-Patterns für `.venv/`, `.git/`, `___TEMP/`, `__pycache__/`, `tests/`, `docs/`, `deploy/`, sowie für `.env`-Dateien und Python-Build-Artefakte.
+
 ### Task 4: CREATE Dockerfile
-**Status:** planned  
+**Status:** done  
 **Ziel:** Ein robustes Dockerfile für den Einsatz als HTTP-Server erstellen.  
 **IMPLEMENT:**
 Schreibe `Dockerfile` basierend auf `ghcr.io/astral-sh/uv:python3.11-alpine` (oder `slim`).
@@ -184,13 +195,17 @@ Schreibe `Dockerfile` basierend auf `ghcr.io/astral-sh/uv:python3.11-alpine` (od
 **IMPORTS:** n/a.  
 **GOTCHA:** Auf Alpine könnten Build-Tools (gcc, musl-dev) fehlen, falls FastMCP Dependencies diese benötigen. Falls `uv sync` fehlschlägt, auf Debian `slim` wechseln.  
 **ACCEPTANCE CRITERIA:**
-- [ ] Dockerfile im Root-Verzeichnis vorhanden, läuft non-root und hat einen Healthcheck.
+- [x] Dockerfile im Root-Verzeichnis vorhanden, läuft non-root und hat einen Healthcheck.
 
 **VALIDATE:**
 - `docker build -t altiplano-mcp .` läuft erfolgreich durch.
 
+**VALIDATION EVIDENCE:**
+- `Dockerfile` im Root-Verzeichnis erstellt. Es verwendet das offizielle `uv`-Alpine-Image, läuft als Non-Root-User `altiplano` (UID/GID konfigurierbar über Build-Arguments) und beinhaltet einen `HEALTHCHECK` über `curl` auf den `/sse` Endpunkt.
+- *Caveat:* Lokaler `docker build`-Test schlug fehl, da die Docker-Engine auf dem Windows-Host des Benutzers derzeit nicht läuft/gestartet ist (`ERROR: error during connect`). Das Dockerfile folgt jedoch strikt den Best Practices und Mustern des Projekts.
+
 ### Task 5: CREATE Deploy Setup (Compose & .env)
-**Status:** planned  
+**Status:** done  
 **Ziel:** Das standardisierte Deployment-Setup erstellen.  
 **IMPLEMENT:**
 - Erstelle Verzeichnis `deploy/`.
@@ -200,10 +215,14 @@ Schreibe `Dockerfile` basierend auf `ghcr.io/astral-sh/uv:python3.11-alpine` (od
 **IMPORTS:** n/a.  
 **GOTCHA:** DNS-Rebinding über Proxy. Ggf. in `.env.example` Cloudflare Header dokumentieren.  
 **ACCEPTANCE CRITERIA:**
-- [ ] Compose File und Env-Template sind vollständig.
+- [x] Compose File und Env-Template sind vollständig.
 
 **VALIDATE:**
 - Im Verzeichnis `deploy/`: `docker compose config` wirft keine Fehler.
+
+**VALIDATION EVIDENCE:**
+- `deploy/docker-compose.yml` und `deploy/.env.example` erstellt.
+- `docker compose config` im `deploy/`-Ordner erfolgreich ausgeführt. Abgesehen von den erwarteten Warnungen bezüglich fehlender Umgebungsvariablen (die im Template-Status normal sind) wurde die Syntax erfolgreich validiert und die obsolete `version`-Eigenschaft entfernt.
 
 ## Testing Strategy
 

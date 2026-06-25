@@ -14,12 +14,12 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| Remote HTTP MCP | planned | [plan](docs/project/features/remote-http-mcp/plan-v003.md) | 2026-06-25 |
 
 ## Abgeschlossene Features
 
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| Remote HTTP MCP | [plan](docs/project/features/remote-http-mcp/plan-v003.md) | 2026-06-25 |
 | Task-Beziehungen | [plan](docs/project/features/task-beziehungen/plan-v001.md) | 2026-06-25 |
 | Allgemeines Löschen | [plan](docs/project/features/allgemeines-loeschen/plan-v001.md) | 2026-06-25 |
 | Dateianhänge | [plan](docs/project/features/dateianhaenge/plan-v002.md) | 2026-06-25 |

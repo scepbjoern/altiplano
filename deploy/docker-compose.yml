@@ -1,0 +1,22 @@
+services:
+  app:
+    container_name: altiplano-mcp
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    restart: unless-stopped
+    environment:
+      MCP_TRANSPORT: ${MCP_TRANSPORT:-sse}
+      FASTMCP_HOST: ${FASTMCP_HOST:-0.0.0.0}
+      FASTMCP_PORT: ${FASTMCP_PORT:-8000}
+      FASTMCP_DISABLE_DNS_REBINDING: ${FASTMCP_DISABLE_DNS_REBINDING:-true}
+      FASTMCP_ALLOWED_HOSTS: ${FASTMCP_ALLOWED_HOSTS:-}
+      VIKUNJA_URL: ${VIKUNJA_URL}
+      VIKUNJA_API_TOKEN: ${VIKUNJA_API_TOKEN}
+      CF_CLIENT_ID: ${CF_CLIENT_ID:-}
+      CF_CLIENT_SECRET: ${CF_CLIENT_SECRET:-}
+    ports:
+      - "${APP_PORT:-6274}:${FASTMCP_PORT:-8000}"

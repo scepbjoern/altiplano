@@ -667,8 +667,31 @@ async def remove_assignee(task_id: int, user_id: int) -> dict:
 
 
 def main() -> None:
-    mcp.run()
+    transport = os.environ.get("MCP_TRANSPORT", "stdio")
+    if transport in ("sse", "streamable-http"):
+        host = os.environ.get("FASTMCP_HOST", "127.0.0.1")
+        port_str = os.environ.get("FASTMCP_PORT")
+        if port_str:
+            try:
+                mcp.settings.port = int(port_str)
+            except ValueError:
+                pass
+        mcp.settings.host = host
+
+        allowed_hosts_env = os.environ.get("FASTMCP_ALLOWED_HOSTS")
+        if allowed_hosts_env:
+            hosts = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
+            mcp.settings.transport_security.allowed_hosts = hosts
+
+        disable_dns = os.environ.get("FASTMCP_DISABLE_DNS_REBINDING", "false").lower() in ("true", "1", "yes")
+        if disable_dns:
+            mcp.settings.transport_security.enable_dns_rebinding_protection = False
+
+        mcp.run(transport=transport)
+    else:
+        mcp.run()
 
 
 if __name__ == "__main__":
     main()
+
