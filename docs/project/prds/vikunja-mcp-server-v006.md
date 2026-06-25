@@ -10,6 +10,7 @@
 | Version | Datum | Anlass | Kurzbeschreibung |
 |---|---|---|---|
 | v006 | 2026-06-24 | Fehlerkorrektur | Payload-Fix für `update_task`, `set_reminders`, `complete_task`, `move_task_to_project` (fehlendes Pflichtfeld `title`) sowie fehlende Felder (`description`, `identifier` in `list_projects`; `hex_color` in `create_project`) ergänzt |
+| v006 | 2026-06-25 | Datenmodell-Präzisierung | Bucket-Datenmodell (Kapitel 8/9) präzisiert: Buckets sind Objekte der Projekt-Kanban-View (nicht direkt am Projekt), mit Feldern `project_view_id` statt `project_id`, sowie `limit`/`count`/`position`. Gegen echte Vikunja-Instanz (v2.3.0) verifiziert. |
 | v005 | 2026-06-24 | Optimistic Locking | Optimistisches Sperren (updated-Zeitstempel) für Projekt- und Task-Updates eingeführt, um 412-Fehler zu vermeiden |
 | v004 | 2026-06-24 | Cloudflare Access Support | Support für Cloudflare Service Token Header (CF-Access-Client-Id, CF-Access-Client-Secret) im MVP ergänzt |
 | v003 | 2026-06-24 | PRD Update | Mocking-Setup als Chore-Feature an Priorität 1 hinzugefügt, um sicheres Testing zu gewährleisten |
@@ -97,7 +98,7 @@
 | Taskverwaltung | Suchen (Filter), Erstellen, Aktualisieren, Verschieben, Erledigen. | MVP | Must | Personal User | Inkl. Prioritäten, Daten und Reminder. `complete_task` als eigener Wrapper. Alle Update-Tools müssen vor dem Schreiben per `GET` die Pflichtfelder (insb. `title`) laden, damit Teil-Updates nicht an Vikunja-Validierung scheitern. |
 | Labelverwaltung | Labels listen und zu Tasks hinzufügen. | MVP | Should | Personal User | Bereits im Code. |
 | Cloudflare Access | Authentifizierung des ausgehenden HTTP-Clients über Service Token. | MVP | Must | System-Admin | Optional über env-Variablen / config-Datei konfigurierbar. |
-| Bucket-Verwaltung | Kanban Views strukturieren. | Medium | Could | Personal User | |
+| Bucket-Verwaltung | Kanban Buckets innerhalb von Projekt-Kanban-Views erstellen/verwalten. | Medium | Could | Personal User | Buckets sind View-Objekte, nicht direkt am Projekt. |
 | Lokaler Betrieb | Starten via `stdio` für Codex / Claude Desktop. | MVP | Must | KI-Client | Credentials via ENV. |
 
 # 9. Daten und Statusmodell
@@ -106,7 +107,7 @@ Es werden im System ausschliesslich echte Produktivdaten genutzt, weshalb keine 
 | Objekt | Zweck | Wichtige Felder | Beziehungen / Status | Relevanz für Ausbaustufe |
 |---|---|---|---|---|
 | Project | Ordnerstruktur für Tasks | `id`, `identifier`, `title`, `description`, `hex_color`, `parent_project_id`, `is_archived` | Enthält Tasks. Kann verschachtelt sein. | MVP |
-| Bucket | Kanban-Spalten | `id`, `project_id`, `title` | Ordnet Tasks visuell in Projekten an. | Medium |
+| Bucket | Kanban-Spalten (via ProjectView) | `id`, `project_view_id`, `title`, `limit`, `count`, `position` | Ordnet Tasks innerhalb einer Projekt-Kanban-View an. | Medium |
 | Task | Die eigentliche Aufgabe | `id`, `identifier`, `project_id`, `bucket_id`, `title`, `description`, `done`, `priority`, `start_date`, `due_date`, `reminders` | Gehört zu Project/Bucket, hat Labels/Comments. | MVP |
 | Label | Kategorisierung | `id`, `title`, `hex_color` | Verknüpft mit Tasks. | MVP |
 
