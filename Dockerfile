@@ -18,8 +18,10 @@ COPY pyproject.toml uv.lock ./
 # Install dependencies (without the package itself)
 RUN uv sync --frozen --no-install-project --no-dev
 
-# Copy package source
+# Copy package source and README
 COPY src/ ./src
+COPY README.md ./
+
 
 # Sync project (installs altiplano in the virtual environment)
 RUN uv sync --frozen --no-dev
