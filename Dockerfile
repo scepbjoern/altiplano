@@ -23,8 +23,8 @@ COPY src/ ./src
 COPY README.md ./
 
 
-# Sync project (installs altiplano in the virtual environment)
-RUN uv sync --frozen --no-dev
+# Sync project (installs altiplano in the virtual environment as non-editable)
+RUN uv sync --frozen --no-dev --no-editable
 
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH"
