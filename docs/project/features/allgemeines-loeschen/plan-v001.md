@@ -150,7 +150,7 @@ Tests für alle drei Tools in `test_server.py` (jeweils mit und ohne `confirm=Tr
 
 ### Task 1: UPDATE src/altiplano/server.py
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Hinzufügen der Lösch-Tools für Tasks, Comments und Buckets.  
 **IMPLEMENT:** 
 - Erstelle `@mcp.tool()` `delete_task(task_id: int, confirm: bool = False)`.
@@ -160,15 +160,15 @@ Tests für alle drei Tools in `test_server.py` (jeweils mit und ohne `confirm=Tr
 **PATTERN:** `remove_assignee` (für generisches `DELETE`), Bestätigungs-Pattern.  
 **GOTCHA:** `delete_bucket` benötigt den View-Resolve-Schritt.  
 **ACCEPTANCE CRITERIA:**
-- [ ] 3 Tools sind registriert und nutzen `confirm` Flag.
-- [ ] Aufruf ohne `confirm` bricht korrekt ab.
+- [x] 3 Tools sind registriert und nutzen `confirm` Flag.
+- [x] Aufruf ohne `confirm` bricht korrekt ab.
 
 **VALIDATE:**
-- `uv run pytest`
+- `uv run pytest` (Erfolgreich ausgeführt, Syntax ist valide)
 
 ### Task 2: UPDATE tests/test_server.py
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Testabdeckung der Lösch-Tools sicherstellen.  
 **IMPLEMENT:** 
 - Test `test_tool_delete_task` (mit/ohne confirm).
@@ -177,11 +177,11 @@ Tests für alle drei Tools in `test_server.py` (jeweils mit und ohne `confirm=Tr
 - In `test_mcp_initialization` die drei neuen Tools ins Assert aufnehmen.  
 **PATTERN:** `test_tool_delete_task_attachment`  
 **ACCEPTANCE CRITERIA:**
-- [ ] 100% Pass Rate für neue Tools in pytest.
-- [ ] `ValueError` bei fehlendem `confirm` wird in Tests validiert.
+- [x] 100% Pass Rate für neue Tools in pytest.
+- [x] `ValueError` bei fehlendem `confirm` wird in Tests validiert.
 
 **VALIDATE:**
-- `uv run pytest`
+- `uv run pytest` (26/26 Tests bestanden, inklusive der neuen Tests für die Bestätigung und Fehlerbehandlung)
 
 ## Testing Strategy
 
@@ -209,15 +209,15 @@ uv run pytest
 
 ## Acceptance Criteria
 
-- [ ] Alle 3 Löschfunktionen existieren als MCP Tools.
-- [ ] Zweistufiger Bestätigungs-Prozess ist via `confirm` Parameter durchgesetzt.
-- [ ] Tests validieren das Abbrechen bei `confirm=False`.
+- [x] Alle 3 Löschfunktionen existieren als MCP Tools.
+- [x] Zweistufiger Bestätigungs-Prozess ist via `confirm` Parameter durchgesetzt.
+- [x] Tests validieren das Abbrechen bei `confirm=False`.
 
 ## Completion Checklist
 
-- [ ] Alle Tasks sind umgesetzt
-- [ ] Jeder Task wurde validiert
-- [ ] Feature ist bereit für `/document` und `/commit`
+- [x] Alle Tasks sind umgesetzt
+- [x] Jeder Task wurde validiert
+- [x] Feature ist bereit für `/document` und `/commit`
 
 ## Documentation Notes
 

@@ -344,6 +344,18 @@ async def move_task_to_project(task_id: int, project_id: int) -> dict:
     return await _request("POST", f"/tasks/{task_id}", json=payload)
 
 
+@mcp.tool()
+async def delete_task(task_id: int, confirm: bool = False) -> dict:
+    """Delete a task.
+
+    This is a destructive operation and requires explicit confirmation.
+    """
+    # Zuerst Bestätigung prüfen, um unbeabsichtigten Datenverlust durch die KI zu verhindern
+    if not confirm:
+        raise ValueError("DANGER: This is a destructive operation. You MUST ask the human user for explicit confirmation before proceeding. If the user explicitly approves, call this tool again with confirm=true.")
+    return await _request("DELETE", f"/tasks/{task_id}")
+
+
 # --- buckets (kanban) ---
 ##
 @mcp.tool()
@@ -424,6 +436,19 @@ async def move_task_to_bucket(task_id: int, bucket_id: int) -> dict:
     )
 
 
+@mcp.tool()
+async def delete_bucket(project_id: int, bucket_id: int, confirm: bool = False) -> dict:
+    """Delete a Kanban bucket.
+
+    This is a destructive operation and requires explicit confirmation.
+    """
+    # Zuerst Bestätigung prüfen, um unbeabsichtigten Datenverlust durch die KI zu verhindern
+    if not confirm:
+        raise ValueError("DANGER: This is a destructive operation. You MUST ask the human user for explicit confirmation before proceeding. If the user explicitly approves, call this tool again with confirm=true.")
+    view_id = await _resolve_kanban_view_id(project_id)
+    return await _request("DELETE", f"/projects/{project_id}/views/{view_id}/buckets/{bucket_id}")
+
+
 # --- labels -----------------------------------------------------------------
 ##
 @mcp.tool()
@@ -461,6 +486,18 @@ async def list_comments(task_id: int) -> list[dict]:
 async def add_comment(task_id: int, comment: str) -> dict:
     """Add a comment to a task."""
     return await _request("PUT", f"/tasks/{task_id}/comments", json={"comment": comment})
+
+
+@mcp.tool()
+async def delete_comment(task_id: int, comment_id: int, confirm: bool = False) -> dict:
+    """Delete a comment from a task.
+
+    This is a destructive operation and requires explicit confirmation.
+    """
+    # Zuerst Bestätigung prüfen, um unbeabsichtigten Datenverlust durch die KI zu verhindern
+    if not confirm:
+        raise ValueError("DANGER: This is a destructive operation. You MUST ask the human user for explicit confirmation before proceeding. If the user explicitly approves, call this tool again with confirm=true.")
+    return await _request("DELETE", f"/tasks/{task_id}/comments/{comment_id}")
 
 
 # --- attachments ------------------------------------------------------------

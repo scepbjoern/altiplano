@@ -40,6 +40,9 @@ async def test_mcp_initialization():
         "get_task_frontend_url",
         "upload_task_attachment_base64",
         "upload_task_attachment_from_url",
+        "delete_task",
+        "delete_comment",
+        "delete_bucket",
     ]
     
     for tool in expected_tools:
@@ -583,4 +586,64 @@ async def test_tool_upload_task_attachment_from_url(mock_client_class, mock_requ
     assert "files" in called_kwargs
     assert called_kwargs["files"]["files"][0] == "file.pdf"
     assert called_kwargs["files"]["files"][1] == b"Downloaded content"
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_delete_task(mock_request):
+    """Test delete_task tool."""
+    from altiplano.server import delete_task
+
+    # 1. Without confirmation (should raise ValueError)
+    with pytest.raises(ValueError, match="DANGER: This is a destructive operation"):
+        await delete_task(task_id=123, confirm=False)
+    
+    # 2. With confirmation
+    mock_request.return_value = {"ok": True}
+    res = await delete_task(task_id=123, confirm=True)
+    assert res == {"ok": True}
+    mock_request.assert_called_once_with("DELETE", "/tasks/123")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_delete_comment(mock_request):
+    """Test delete_comment tool."""
+    from altiplano.server import delete_comment
+
+    # 1. Without confirmation (should raise ValueError)
+    with pytest.raises(ValueError, match="DANGER: This is a destructive operation"):
+        await delete_comment(task_id=123, comment_id=456, confirm=False)
+    
+    # 2. With confirmation
+    mock_request.return_value = {"ok": True}
+    res = await delete_comment(task_id=123, comment_id=456, confirm=True)
+    assert res == {"ok": True}
+    mock_request.assert_called_once_with("DELETE", "/tasks/123/comments/456")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_delete_bucket(mock_request):
+    """Test delete_bucket tool."""
+    from altiplano.server import delete_bucket
+
+    # 1. Without confirmation (should raise ValueError)
+    with pytest.raises(ValueError, match="DANGER: This is a destructive operation"):
+        await delete_bucket(project_id=1, bucket_id=2, confirm=False)
+    
+    # 2. With confirmation (should mock resolve view id as well)
+    async def mock_req_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/projects/1/views":
+            return [{"id": 10, "view_kind": "kanban"}]
+        if method == "DELETE" and path == "/projects/1/views/10/buckets/2":
+            return {"ok": True}
+        return None
+
+    mock_request.side_effect = mock_req_side_effect
+    res = await delete_bucket(project_id=1, bucket_id=2, confirm=True)
+    assert res == {"ok": True}
+    mock_request.assert_any_call("GET", "/projects/1/views")
+    mock_request.assert_any_call("DELETE", "/projects/1/views/10/buckets/2")
+
 
