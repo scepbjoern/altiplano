@@ -20,6 +20,9 @@ async def test_mcp_initialization():
         "update_task",
         "set_reminders",
         "list_labels",
+        "create_label",
+        "update_label",
+        "delete_label",
         "add_label",
         "remove_label",
         "list_comments",
@@ -759,6 +762,86 @@ async def test_tool_remove_task_relation(mock_request):
     result = await remove_task_relation(task_id=1, other_task_id=2, relation_kind="subtask")
     assert result == {"ok": True}
     mock_request.assert_called_once_with("DELETE", "/tasks/1/relations/subtask/2")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_create_label(mock_request):
+    """Test create_label tool."""
+    mock_request.return_value = {
+        "id": 10,
+        "title": "Priority Label",
+        "description": "High priority tasks",
+        "hex_color": "ff0000"
+    }
+    from altiplano.server import create_label
+    result = await create_label(title="Priority Label", description="High priority tasks", hex_color="ff0000")
+    assert result["id"] == 10
+    assert result["title"] == "Priority Label"
+    mock_request.assert_called_once_with(
+        "PUT",
+        "/labels",
+        json={"title": "Priority Label", "description": "High priority tasks", "hex_color": "ff0000"}
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_update_label(mock_request):
+    """Test update_label tool."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/labels/10":
+            return {
+                "id": 10,
+                "title": "Old Label",
+                "description": "Old desc",
+                "hex_color": "aabbcc",
+                "updated": "2023-01-01T00:00:00Z"
+            }
+        if method == "POST" and path == "/labels/10":
+            return {"id": 10, "title": "New Label", "description": "Old desc", "hex_color": "ff0000"}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import update_label
+    result = await update_label(label_id=10, title="New Label", hex_color="ff0000")
+    assert result["title"] == "New Label"
+    mock_request.assert_any_call("GET", "/labels/10")
+    mock_request.assert_any_call(
+        "POST",
+        "/labels/10",
+        json={
+            "title": "New Label",
+            "description": "Old desc",
+            "hex_color": "ff0000",
+            "updated": "2023-01-01T00:00:00Z"
+        }
+    )
+
+
+@pytest.mark.anyio
+async def test_tool_update_label_no_fields():
+    """Test update_label raises ValueError if no fields are provided."""
+    from altiplano.server import update_label
+    with pytest.raises(ValueError, match="No fields to update"):
+        await update_label(label_id=10)
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_delete_label(mock_request):
+    """Test delete_label tool with and without confirm."""
+    from altiplano.server import delete_label
+    
+    # Case 1: without confirm, raises ValueError
+    with pytest.raises(ValueError, match="DANGER"):
+        await delete_label(label_id=10, confirm=False)
+        
+    # Case 2: with confirm
+    mock_request.return_value = {"ok": True}
+    result = await delete_label(label_id=10, confirm=True)
+    assert result == {"ok": True}
+    mock_request.assert_called_once_with("DELETE", "/labels/10")
+
 
 
 def test_main_transport_selection(monkeypatch):

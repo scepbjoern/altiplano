@@ -484,6 +484,77 @@ async def remove_label(task_id: int, label_id: int) -> dict:
     return await _request("DELETE", f"/tasks/{task_id}/labels/{label_id}")
 
 
+@mcp.tool()
+async def create_label(
+    title: str,
+    description: str | None = None,
+    hex_color: str | None = None,
+) -> dict:
+    """Create a new global label.
+
+    Use `hex_color` to set a custom color (e.g. "ff0000").
+    """
+    # Payload für die Vikunja-API zusammenbauen
+    payload: dict[str, Any] = {"title": title}
+    if description is not None:
+        payload["description"] = description
+    if hex_color is not None:
+        payload["hex_color"] = hex_color
+    return await _request("PUT", "/labels", json=payload)
+
+
+@mcp.tool()
+async def update_label(
+    label_id: int,
+    title: str | None = None,
+    description: str | None = None,
+    hex_color: str | None = None,
+) -> dict:
+    """Update a global label. Only the fields you pass are changed.
+
+    Use `hex_color` to set a custom color (e.g. "ff0000").
+    """
+    changes: dict[str, Any] = {}
+    if title is not None:
+        changes["title"] = title
+    if description is not None:
+        changes["description"] = description
+    if hex_color is not None:
+        changes["hex_color"] = hex_color
+    if not changes:
+        raise ValueError("No fields to update")
+
+    # Das aktuelle Label abrufen, da Vikunja beim POST alle Felder (Pflichtfelder) erwartet
+    label = await _request("GET", f"/labels/{label_id}")
+    payload: dict[str, Any] = {
+        "title": label["title"],
+        "description": label.get("description", ""),
+        "hex_color": label.get("hex_color", ""),
+    }
+    if "updated" in label:
+        payload["updated"] = label["updated"]
+    payload.update(changes)
+
+    return await _request("POST", f"/labels/{label_id}", json=payload)
+
+
+@mcp.tool()
+async def delete_label(label_id: int, confirm: bool = False) -> dict:
+    """Delete a global label.
+
+    This is a destructive operation and requires explicit confirmation.
+    """
+    # Sicherheitsprüfung: Löschen erfordert explizite Bestätigung durch den Benutzer
+    if not confirm:
+        raise ValueError(
+            "DANGER: This is a destructive operation. You MUST ask the human user for explicit "
+            "confirmation before proceeding. If the user explicitly approves, call this tool again "
+            "with confirm=true."
+        )
+    return await _request("DELETE", f"/labels/{label_id}")
+
+
+
 # --- comments ---------------------------------------------------------------
 ##
 @mcp.tool()

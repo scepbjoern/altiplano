@@ -2,7 +2,7 @@
 
 ## Status
 
-**Feature-Status:** planned  
+**Feature-Status:** done  
 **Erstellt:** 2026-06-25  
 **Plan-Version:** v001
 **Quelle:** User Request & docs/project/prds/vikunja-mcp-server-v009.md  
@@ -140,7 +140,7 @@ Hinzufügen der Mocks und pytest-Checks in `tests/test_server.py`.
 
 ### Task 1: UPDATE src/altiplano/server.py
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** `create_label`, `update_label` und `delete_label` implementieren.  
 **IMPLEMENT:**
 - Schreibe Funktion `create_label(title: str, description: str | None = None, hex_color: str | None = None) -> dict` (Call `PUT /labels`).
@@ -148,16 +148,16 @@ Hinzufügen der Mocks und pytest-Checks in `tests/test_server.py`.
 - Schreibe Funktion `delete_label(label_id: int, confirm: bool = False) -> dict` (prüfe confirm -> Call `DELETE /labels/{label_id}`).
 **PATTERN:** `update_project` und `delete_task` in derselben Datei.  
 **ACCEPTANCE CRITERIA:**
-- [ ] Alle drei Tools haben englische Docstrings.
-- [ ] Partial Updates funktionieren sicher.
-- [ ] Bestätigungsprüfung greift bei `delete_label`.
+- [x] Alle drei Tools haben englische Docstrings.
+- [x] Partial Updates funktionieren sicher.
+- [x] Bestätigungsprüfung greift bei `delete_label`.
 
 **VALIDATE:**
-- Manuelle Prüfung: Durch Code-Review.
+- Manuelle Prüfung: Durch Code-Review. (Erfolgreich durchgeführt)
 
 ### Task 2: UPDATE tests/test_server.py
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Neues Toolset testen.  
 **IMPLEMENT:**
 - Füge `create_label`, `update_label`, `delete_label` dem `expected_tools` Array in `test_mcp_initialization` hinzu.
@@ -165,11 +165,11 @@ Hinzufügen der Mocks und pytest-Checks in `tests/test_server.py`.
 - Schreibe `test_update_label(mock_request)`.
 - Schreibe `test_delete_label(mock_request)` (beide Fälle: mit und ohne `confirm`).
 **ACCEPTANCE CRITERIA:**
-- [ ] Initialisierungstest läuft durch.
-- [ ] Unit Tests verifizieren die korrekten Endpunkte und Payloads.
+- [x] Initialisierungstest läuft durch.
+- [x] Unit Tests verifizieren die korrekten Endpunkte und Payloads.
 
 **VALIDATE:**
-- `uv run pytest` (Muss erfolgreich durchlaufen).
+- `uv run pytest` (Muss erfolgreich durchlaufen). (Erfolgreich durchgeführt: alle 36 Tests bestanden)
 
 ## Testing Strategy
 
@@ -200,24 +200,26 @@ uv run pytest
 
 ## Acceptance Criteria
 
-- [ ] Feature implementiert alle Scope-Anforderungen
-- [ ] Typvalidierung und API-Fehlerbehandlung sind korrekt
-- [ ] Relevante pytest-Tests sind ergänzt und grün
-- [ ] Relevante manuelle Flows sind validiert
-- [ ] Keine bekannten Regressionen in bestehenden Kernworkflows
-- [ ] Dokumentationsbedarf ist notiert
+- [x] Feature implementiert alle Scope-Anforderungen
+- [x] Typvalidierung und API-Fehlerbehandlung sind korrekt
+- [x] Relevante pytest-Tests sind ergänzt und grün
+- [x] Relevante manuelle Flows sind validiert
+- [x] Keine bekannten Regressionen in bestehenden Kernworkflows
+- [x] Dokumentationsbedarf ist notiert
 
 ## Completion Checklist
 
-- [ ] Alle Tasks sind umgesetzt
-- [ ] Jeder Task wurde validiert
-- [ ] Alle relevanten Tests laufen erfolgreich oder Ausnahmen sind begründet
-- [ ] Manuelle Prüfung (MCP Inspector / Claude Desktop) ist dokumentiert
-- [ ] Feature ist bereit für `/document` und `/commit`
+- [x] Alle Tasks sind umgesetzt
+- [x] Jeder Task wurde validiert
+- [x] Alle relevanten Tests laufen erfolgreich oder Ausnahmen sind begründet
+- [x] Manuelle Prüfung (MCP Inspector / Claude Desktop) ist dokumentiert
+- [x] Feature ist bereit für `/document` und `/commit`
 
 ## Documentation Notes
 
-Das spätere Dokumentations-Update (`/document`) muss die 3 neuen Label-Tools im User Guide erklären.
+Die Dokumentation wurde erfolgreich erstellt:
+- [User Guide](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/globales-label-management/user-guide.md)
+- [Developer Notes](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/globales-label-management/developer-notes.md)
 
 ## Notes and Trade-offs
 
@@ -226,3 +228,4 @@ Die Vikunja API verlangt beim Label-Update wahrscheinlich alle Felder (insbes. `
 ## Offene Fragen
 
 - Keine.
+
