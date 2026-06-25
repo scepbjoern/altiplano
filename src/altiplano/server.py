@@ -95,6 +95,17 @@ def _task_summary(t: dict) -> dict:
     }
 
 
+async def _resolve_kanban_view_id(project_id: int) -> int:
+    views = await _request("GET", f"/projects/{project_id}/views")
+    for v in views or []:
+        if v.get("view_kind") == "kanban":
+            return v["id"]
+    raise RuntimeError(
+        f"Project {project_id} has no Kanban view; create one in the Vikunja UI first."
+    )
+
+
+
 # --- projects ---------------------------------------------------------------
 ##
 @mcp.tool()
@@ -327,6 +338,86 @@ async def move_task_to_project(task_id: int, project_id: int) -> dict:
     if "updated" in task:
         payload["updated"] = task["updated"]
     return await _request("POST", f"/tasks/{task_id}", json=payload)
+
+
+# --- buckets (kanban) ---
+##
+@mcp.tool()
+async def list_buckets(project_id: int) -> list[dict]:
+    """List Kanban buckets (columns) of a project's Kanban view."""
+    view_id = await _resolve_kanban_view_id(project_id)
+    data = await _request("GET", f"/projects/{project_id}/views/{view_id}/buckets")
+    return [
+        {
+            "id": b.get("id"),
+            "title": b.get("title"),
+            "limit": b.get("limit", 0),
+            "position": b.get("position"),
+            "count": b.get("count", 0),
+        }
+        for b in (data or [])
+    ]
+
+
+@mcp.tool()
+async def create_bucket(project_id: int, title: str, limit: int | None = None) -> dict:
+    """Create a new Kanban bucket (column) in a project's Kanban view.
+
+    Use `limit` to cap how many tasks may be placed in this bucket (omit for unlimited).
+    """
+    view_id = await _resolve_kanban_view_id(project_id)
+    payload: dict[str, Any] = {"title": title}
+    if limit is not None:
+        payload["limit"] = limit
+    return await _request("PUT", f"/projects/{project_id}/views/{view_id}/buckets", json=payload)
+
+
+@mcp.tool()
+async def update_bucket(
+    project_id: int,
+    bucket_id: int,
+    title: str | None = None,
+    limit: int | None = None,
+) -> dict:
+    """Update a Kanban bucket. Only the fields you pass are changed."""
+    changes: dict[str, Any] = {}
+    if title is not None:
+        changes["title"] = title
+    if limit is not None:
+        changes["limit"] = limit
+    if not changes:
+        raise ValueError("No fields to update")
+
+    view_id = await _resolve_kanban_view_id(project_id)
+    buckets = await _request("GET", f"/projects/{project_id}/views/{view_id}/buckets")
+    bucket = next((b for b in (buckets or []) if b.get("id") == bucket_id), None)
+    if bucket is None:
+        raise RuntimeError(f"Bucket {bucket_id} not found in project {project_id}")
+
+    payload: dict[str, Any] = {
+        "title": bucket["title"],
+        "limit": bucket.get("limit", 0),
+    }
+    if "updated" in bucket:
+        payload["updated"] = bucket["updated"]
+    payload.update(changes)
+
+    return await _request(
+        "POST", f"/projects/{project_id}/views/{view_id}/buckets/{bucket_id}", json=payload
+    )
+
+
+@mcp.tool()
+async def move_task_to_bucket(task_id: int, bucket_id: int) -> dict:
+    """Move a task into a specific Kanban bucket within its current project."""
+    task = await _request("GET", f"/tasks/{task_id}")
+    project_id = task["project_id"]
+    view_id = await _resolve_kanban_view_id(project_id)
+    return await _request(
+        "POST",
+        f"/projects/{project_id}/views/{view_id}/buckets/{bucket_id}/tasks",
+        json={"task_id": task_id},
+    )
 
 
 # --- labels -----------------------------------------------------------------

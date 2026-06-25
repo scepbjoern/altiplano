@@ -2,7 +2,7 @@
 
 ## Status
 
-**Feature-Status:** planned
+**Feature-Status:** done
 **Erstellt:** 2026-06-25
 **Plan-Version:** v001
 **Quelle:** PRD `docs/project/prds/vikunja-mcp-server-v006.md` Kapitel 15 ("Kanban Buckets", Medium-Phase), Kapitel 6 (Medium-Version Scope), Kapitel 7 (US-5)
@@ -213,7 +213,7 @@ Wichtig: Tasks top-to-bottom ausführen. Jeder Task ist atomic und einzeln valid
 
 ### Task 2: ADD `_resolve_kanban_view_id` Helper
 
-**Status:** planned
+**Status:** done
 **Ziel:** Privater Helper, der für ein Projekt die `id` der Kanban-View liefert oder einen klaren Fehler wirft.
 **IMPLEMENT:** In `src/altiplano/server.py` nach `_task_summary` (vor der `# --- projects ---` Sektion oder direkt vor der neuen Buckets-Sektion) folgende Funktion ergänzen:
 
@@ -242,7 +242,7 @@ async def _resolve_kanban_view_id(project_id: int) -> int:
 
 ### Task 3: ADD `list_buckets` Tool
 
-**Status:** planned
+**Status:** done
 **Ziel:** Buckets eines Projekts auflisten.
 **IMPLEMENT:** Neue Sektion `# --- buckets (kanban) ---` nach `move_task_to_project` (Zeile 329) einfügen:
 
@@ -278,7 +278,7 @@ async def list_buckets(project_id: int) -> list[dict]:
 
 ### Task 4: ADD `create_bucket` Tool
 
-**Status:** planned
+**Status:** done
 **Ziel:** Neuen Bucket in der Kanban-View eines Projekts anlegen.
 **IMPLEMENT:**
 
@@ -310,7 +310,7 @@ async def create_bucket(project_id: int, title: str, limit: int | None = None) -
 
 ### Task 5: ADD `update_bucket` Tool
 
-**Status:** planned
+**Status:** done
 **Ziel:** Bucket umbenennen und/oder Limit ändern, ohne andere Felder zu überschreiben.
 **IMPLEMENT:**
 
@@ -365,7 +365,7 @@ async def update_bucket(
 
 ### Task 6: ADD `move_task_to_bucket` Tool
 
-**Status:** planned
+**Status:** done
 **Ziel:** Task einem bestimmten Bucket im (eigenen) Projekt zuweisen.
 **IMPLEMENT:**
 
@@ -397,7 +397,7 @@ async def move_task_to_bucket(task_id: int, bucket_id: int) -> dict:
 
 ### Task 7: UPDATE/ADD Tests in `tests/test_server.py`
 
-**Status:** planned
+**Status:** done
 **Ziel:** Alle neuen Tools und der Helper sind durch Tests abgedeckt; die Tool-Registrierungsliste ist aktuell.
 **IMPLEMENT:**
 - `test_mcp_initialization`: `expected_tools`-Liste um `"list_buckets"`, `"create_bucket"`, `"update_bucket"`, `"move_task_to_bucket"` ergänzen.
@@ -460,21 +460,21 @@ uv run pytest
 
 ## Acceptance Criteria
 
-- [ ] Feature implementiert alle Scope-Anforderungen
-- [ ] Typvalidierung und API-Fehlerbehandlung sind korrekt
-- [ ] Relevante pytest-Tests sind ergänzt und grün
-- [ ] Relevante manuelle Flows sind validiert (insb. Task 1 Verifikation gegen die echte Instanz)
-- [ ] Keine bekannten Regressionen in bestehenden Kernworkflows
-- [ ] Dokumentationsbedarf ist notiert
+- [x] Feature implementiert alle Scope-Anforderungen
+- [x] Typvalidierung und API-Fehlerbehandlung sind korrekt
+- [x] Relevante pytest-Tests sind ergänzt und grün
+- [x] Relevante manuelle Flows sind validiert (insb. Task 1 Verifikation gegen die echte Instanz)
+- [x] Keine bekannten Regressionen in bestehenden Kernworkflows
+- [x] Dokumentationsbedarf ist notiert
 
 ## Completion Checklist
 
-- [ ] Alle Tasks sind umgesetzt
-- [ ] Jeder Task wurde validiert
-- [ ] Alle relevanten Tests laufen erfolgreich oder Ausnahmen sind begründet
-- [ ] Manuelle Prüfung (MCP Inspector / Vikunja-UI) ist dokumentiert
-- [ ] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt
-- [ ] Feature ist bereit für `/document` und `/commit`
+- [x] Alle Tasks sind umgesetzt
+- [x] Jeder Task wurde validiert
+- [x] Alle relevanten Tests laufen erfolgreich oder Ausnahmen sind begründet
+- [x] Manuelle Prüfung (MCP Inspector / Vikunja-UI) ist dokumentiert
+- [x] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt
+- [x] Feature ist bereit für `/document` und `/commit`
 
 ## Documentation Notes
 

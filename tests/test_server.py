@@ -30,7 +30,11 @@ async def test_mcp_initialization():
         "remove_assignee",
         "update_project",
         "complete_task",
-        "move_task_to_project"
+        "move_task_to_project",
+        "list_buckets",
+        "create_bucket",
+        "update_bucket",
+        "move_task_to_bucket",
     ]
     
     for tool in expected_tools:
@@ -341,3 +345,139 @@ async def test_tool_create_project(mock_request):
             "hex_color": "00ff00"
         }
     )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_list_buckets(mock_request):
+    """Test the list_buckets tool."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/projects/1/views":
+            return [{"id": 10, "view_kind": "kanban"}]
+        if method == "GET" and path == "/projects/1/views/10/buckets":
+            return [
+                {
+                    "id": 20,
+                    "title": "Backlog",
+                    "limit": 5,
+                    "position": 1,
+                    "count": 2,
+                    "created_by": {},
+                }
+            ]
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import list_buckets
+    result = await list_buckets(project_id=1)
+    assert result == [
+        {
+            "id": 20,
+            "title": "Backlog",
+            "limit": 5,
+            "position": 1,
+            "count": 2,
+        }
+    ]
+    mock_request.assert_any_call("GET", "/projects/1/views")
+    mock_request.assert_any_call("GET", "/projects/1/views/10/buckets")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_create_bucket(mock_request):
+    """Test the create_bucket tool."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/projects/1/views":
+            return [{"id": 10, "view_kind": "kanban"}]
+        if method == "PUT" and path == "/projects/1/views/10/buckets":
+            return {"id": 20, "title": "In Progress", "limit": 3}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import create_bucket
+    result = await create_bucket(project_id=1, title="In Progress", limit=3)
+    assert result["id"] == 20
+    mock_request.assert_any_call("GET", "/projects/1/views")
+    mock_request.assert_any_call("PUT", "/projects/1/views/10/buckets", json={"title": "In Progress", "limit": 3})
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_update_bucket(mock_request):
+    """Test the update_bucket tool."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/projects/1/views":
+            return [{"id": 10, "view_kind": "kanban"}]
+        if method == "GET" and path == "/projects/1/views/10/buckets":
+            return [{"id": 20, "title": "Old Title", "limit": 5, "updated": "2023-01-01"}]
+        if method == "POST" and path == "/projects/1/views/10/buckets/20":
+            return {"id": 20, "title": "New Title", "limit": 5}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import update_bucket
+    result = await update_bucket(project_id=1, bucket_id=20, title="New Title")
+    assert result["id"] == 20
+    mock_request.assert_any_call("GET", "/projects/1/views")
+    mock_request.assert_any_call("GET", "/projects/1/views/10/buckets")
+    mock_request.assert_any_call(
+        "POST",
+        "/projects/1/views/10/buckets/20",
+        json={"title": "New Title", "limit": 5, "updated": "2023-01-01"},
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_update_bucket_edge_cases(mock_request):
+    """Test error handling in update_bucket."""
+    from altiplano.server import update_bucket
+    
+    # 1. ValueError if no fields updated
+    with pytest.raises(ValueError, match="No fields to update"):
+        await update_bucket(project_id=1, bucket_id=20)
+        
+    # 2. RuntimeError if bucket not found
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/projects/1/views":
+            return [{"id": 10, "view_kind": "kanban"}]
+        if method == "GET" and path == "/projects/1/views/10/buckets":
+            return [{"id": 99, "title": "Some Other Bucket"}]
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    with pytest.raises(RuntimeError, match="Bucket 20 not found in project 1"):
+        await update_bucket(project_id=1, bucket_id=20, title="New Title")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_move_task_to_bucket(mock_request):
+    """Test the move_task_to_bucket tool."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/tasks/50":
+            return {"id": 50, "project_id": 1}
+        if method == "GET" and path == "/projects/1/views":
+            return [{"id": 10, "view_kind": "kanban"}]
+        if method == "POST" and path == "/projects/1/views/10/buckets/20/tasks":
+            return {"ok": True}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import move_task_to_bucket
+    result = await move_task_to_bucket(task_id=50, bucket_id=20)
+    assert result == {"ok": True}
+    mock_request.assert_any_call("GET", "/tasks/50")
+    mock_request.assert_any_call("GET", "/projects/1/views")
+    mock_request.assert_any_call(
+        "POST",
+        "/projects/1/views/10/buckets/20/tasks",
+        json={"task_id": 50},
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_resolve_kanban_view_id_missing(mock_request):
+    """Test helper resolve_kanban_view_id when Kanban view is missing."""
+    mock_request.return_value = [{"id": 10, "view_kind": "list"}]
+    from altiplano.server import list_buckets
+    with pytest.raises(RuntimeError, match="Project 1 has no Kanban view"):
+        await list_buckets(project_id=1)
+
