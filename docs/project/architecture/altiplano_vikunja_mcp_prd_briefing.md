@@ -173,7 +173,7 @@ Client
 Ein möglicher späterer Endpunkt könnte sein:
 
 ```text
-https://vikunja-mcp.melbjo.win/mcp
+https://mcp-tasks.melbjo.win/sse
 ```
 
 Der genaue Domainname ist noch offen.

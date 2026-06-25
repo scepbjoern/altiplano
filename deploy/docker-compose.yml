@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: altiplano-mcp
+    container_name: vikunja-mcp
     build:
       context: ..
       dockerfile: Dockerfile
