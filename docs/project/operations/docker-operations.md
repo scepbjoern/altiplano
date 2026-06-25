@@ -115,6 +115,38 @@ Wenn du Cloudflare nutzt, gehst du am besten wie folgt vor:
 
 Nur Anfragen, die diese Header besitzen, werden von Cloudflare an deinen MCP-Container durchgelassen.
 
+### 2.5 MCP Server Portal (Managed OAuth) für Web-Clients (z.B. ChatGPT)
+
+Für Web-Clients (wie ChatGPT Web), die keine benutzerdefinierten HTTP-Header im Client konfigurieren können, bietet Cloudflare Zero Trust über **MCP Server Portals** eine native Lösung. Das Portal fungiert als Gateway: Es authentifiziert den Benutzer per OAuth 2.1 und leitet die Anfragen über Custom Headers (Service-Token) an den Altiplano-Server weiter.
+
+**Einrichtungsschritte im Cloudflare Zero Trust Dashboard:**
+
+1. **MCP Server registrieren**:
+   - Gehe zu **Access** → **AI Controls** → **MCP Servers**.
+   - Klicke auf **Add MCP server**.
+   - **Name**: `vikunja-mcp`
+   - **HTTP URL**: `https://mcp-tasks.melbjo.win/sse`
+   - **Authentication type**: Wähle **Custom headers** und füge folgende zwei Header hinzu:
+     - Name: `CF-Access-Client-Id` / Value: *(Deine Service-Token Client-ID)*
+     - Name: `CF-Access-Client-Secret` / Value: *(Dein Service-Token Client-Secret)*
+   - Speichere den Server. Der Status sollte auf **Ready** wechseln und die Anzahl der Tools anzeigen.
+
+2. **MCP Server Portal erstellen**:
+   - Gehe zu **Access** → **AI Controls** → **MCP server portals** und klicke auf **Add MCP server portal**.
+   - **Portal name**: `Melbjo-MCP-Portal`
+   - **Custom domain**: Subdomain `mcp` der Domain `melbjo.win` (ergibt `mcp.melbjo.win`).
+   - **Turn on code mode**: **Deaktivieren (grau)**, damit die Vikunja-Tools der KI direkt als einzelne Werkzeuge zur Verfügung stehen.
+   - **Select MCP Servers**: Wähle den zuvor registrierten Server `vikunja-mcp` aus.
+   - **Access policies**: Erstelle eine Policy (z. B. `AllowDefault`), die den Zugriff per One-Time-PIN (OTP) für deine E-Mail-Adresse freigibt.
+   - **Managed OAuth (Beta)**: Aktiviere diese Option ganz unten und trage unter **Allowed redirect URIs** folgende Muster ein:
+     - `https://chatgpt.com/*`
+     - `https://claude.ai/*`
+     - `https://partner.ocean.openai.com/*`
+   - Speichere das Portal.
+
+3. **Client-Konfiguration**:
+   - Die Verbindungs-URL für ChatGPT lautet künftig: **`https://mcp.melbjo.win/mcp`** (das Suffix `/mcp` ist für die Kommunikation über den Streamable-HTTP-Transport zwingend erforderlich).
+
 ---
 
 ## 3. Updates und zukünftige Code-Änderungen einspielen

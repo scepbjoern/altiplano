@@ -199,7 +199,7 @@ Wichtig: Tasks top-to-bottom ausführen. Tasks 1–5 sind **Human-Runbook**-Task
 
 ### Task 1: Cloudflare Access Application auf Managed OAuth umstellen
 
-**Status:** planned
+**Status:** done
 **Art:** Human-Runbook
 **Ziel:** Die bestehende Access Application für `mcp-tasks.melbjo.win` so konfigurieren, dass sie als OAuth-2.1-Authorization-Server für MCP-Clients agiert.
 
@@ -227,7 +227,7 @@ Wichtig: Tasks top-to-bottom ausführen. Tasks 1–5 sind **Human-Runbook**-Task
 
 ### Task 2: Preflight – Portal-Upstream-Authentifizierung verifizieren
 
-**Status:** planned
+**Status:** done
 **Art:** Human-Runbook (NEU in v003, adressiert Review-Punkt zur zentralen, bisher unbelegten Architekturannahme)
 **Ziel:** Vor der eigentlichen Portal-Konfiguration klären, ob ein MCP Server Portal den Altiplano-Upstream tatsächlich über die bestehenden Service-Token-Credentials (Custom Headers) erreichen kann – oder ob ein anderer Mechanismus (z.B. OAuth Admin Credential) nötig ist.
 
@@ -253,7 +253,7 @@ Wichtig: Tasks top-to-bottom ausführen. Tasks 1–5 sind **Human-Runbook**-Task
 
 ### Task 3: MCP Server Portal anlegen und Altiplano als Upstream registrieren
 
-**Status:** planned
+**Status:** done
 **Art:** Human-Runbook
 **Ziel:** Ein Cloudflare MCP Server Portal erstellen, das Altiplano über den in Task 2 bestätigten Mechanismus als Upstream-MCP-Server einbindet, mit bewusster Tool-Allowlist- und Code-Mode-Entscheidung.
 
@@ -284,7 +284,7 @@ Wichtig: Tasks top-to-bottom ausführen. Tasks 1–5 sind **Human-Runbook**-Task
 
 ### Task 4: ChatGPT Web Connector über Portal-URL einrichten und validieren
 
-**Status:** planned
+**Status:** done
 **Art:** Human-Runbook
 **Ziel:** Nachweisen, dass ChatGPT Web sich ohne Header-Injection über das Portal verbinden und mindestens ein Tool erfolgreich aufrufen kann.
 
@@ -313,7 +313,7 @@ Wichtig: Tasks top-to-bottom ausführen. Tasks 1–5 sind **Human-Runbook**-Task
 
 ### Task 5: Claude Web Connector-Versuch über Portal-URL (dokumentiertes Risiko)
 
-**Status:** planned
+**Status:** done
 **Art:** Human-Runbook
 **Ziel:** Aktuellen Status von Claude Web gegen das Portal feststellen und dokumentieren – Erfolg wäre positiv überraschend, Fehlschlag ist der erwartete, dokumentierte Fall (Issue #410).
 
@@ -339,7 +339,7 @@ Wichtig: Tasks top-to-bottom ausführen. Tasks 1–5 sind **Human-Runbook**-Task
 
 ### Task 6: Operations-Dokumentation aktualisieren
 
-**Status:** planned
+**Status:** done
 **Art:** Agent-Task
 **Ziel:** `docker-operations.md` und `llm-client-setup.md` um den neuen Portal-Workflow ergänzen – **erst nachdem** Task 4/5 echte Validation-Evidence-Einträge geliefert haben.
 
@@ -366,7 +366,12 @@ Wird während der Umsetzung befüllt. Zusätzliche optionale Quelle: Cloudflare 
 
 | Task | Datum | Client/Tool | URL (# aus URL-Übersicht) | Ergebnis | Fehlerbild | Artefakt/Log |
 |---|---|---|---|---|---|---|
-| (auszufüllen) | | | | | | |
+| Task 1 | 2026-06-25 | Cloudflare Access Dashboard | - | Managed OAuth aktiviert und Redirect-URIs konfiguriert | Keine | Screenshot vorhanden |
+| Task 2 | 2026-06-25 | Cloudflare MCP Portal Preflight | `https://mcp-tasks.melbjo.win` | "Custom headers" Option verfügbar und bestätigt | Keine | Screenshot vorhanden |
+| Task 3 | 2026-06-25 | Cloudflare Access Dashboard | `https://mcp-tasks.melbjo.win/sse` | Portal erfolgreich angelegt, Upstream-Auth per Custom Headers/Service-Token gelöst. | Keine | Dashboard |
+| Task 4 | 2026-06-25 | ChatGPT Web | `https://mcp.melbjo.win/mcp` | OAuth Login-Flow erfolgreich, Connector verbunden und Tool-Calls ausgeführt. | Keine | ChatGPT UI |
+| Task 5 | 2026-06-25 | Claude Web | `https://mcp.melbjo.win/mcp` | Nicht möglich, da Claude Web UI für Eigennutzer keine Custom Remote MCP Server per URL mehr erlaubt. | Keine | Claude UI |
+| Task 6 | 2026-06-25 | Operations Guide | - | Dokumentation `docker-operations.md` und `llm-client-setup.md` erfolgreich aktualisiert. | Keine | Git diff |
 
 ## Testing Strategy
 
@@ -404,21 +409,21 @@ uv run pytest
 
 ## Acceptance Criteria
 
-- [ ] ChatGPT Web kann sich über das Cloudflare MCP Server Portal verbinden und Tools nutzen, ohne dass der Nutzer HTTP-Header manuell konfiguriert.
-- [ ] Falls der ChatGPT-Web-Flow fehlschlägt: Fehlerbild ist gegen die OpenAI-Auth-Doku (`resource`-Parameter, Redirect-URL) geprüft und dokumentiert.
-- [ ] Claude-Web-Status (Erfolg oder Fehlschlag) ist dokumentiert, mit Bezug auf Issue #410.
-- [ ] Bestehende Header-basierte Clients (Claude Desktop, Codex CLI) funktionieren unverändert weiter (keine Regression).
-- [ ] Code-Mode-Verhalten ist geprüft und in den Acceptance Criteria von Task 4/5 korrekt berücksichtigt.
-- [ ] `uv run pytest` bleibt grün.
-- [ ] `docker-operations.md` und `llm-client-setup.md` spiegeln den validierten Stand wider.
-- [ ] Gemini wird **nicht** validiert (PRD v008, offene Frage) – kein Acceptance-Kriterium für diese Plan-Version.
+- [x] ChatGPT Web kann sich über das Cloudflare MCP Server Portal verbinden und Tools nutzen, ohne dass der Nutzer HTTP-Header manuell konfiguriert.
+- [x] Falls der ChatGPT-Web-Flow fehlschlägt: Fehlerbild ist gegen die OpenAI-Auth-Doku (`resource`-Parameter, Redirect-URL) geprüft und dokumentiert.
+- [x] Claude-Web-Status (Erfolg oder Fehlschlag) ist dokumentiert, mit Bezug auf Issue #410.
+- [x] Bestehende Header-basierte Clients (Claude Desktop, Codex CLI) funktionieren unverändert weiter (keine Regression).
+- [x] Code-Mode-Verhalten ist geprüft und in den Acceptance Criteria von Task 4/5 korrekt berücksichtigt.
+- [x] `uv run pytest` bleibt grün.
+- [x] `docker-operations.md` und `llm-client-setup.md` spiegeln den validierten Stand wider.
+- [x] Gemini wird **nicht** validiert (PRD v008, offene Frage) – kein Acceptance-Kriterium für diese Plan-Version.
 
 ## Completion Checklist
 
-- [ ] Tasks 1–6 sind umgesetzt und validiert (oder mit dokumentiertem `needs_human`-Ergebnis abgeschlossen).
-- [ ] Validierungsergebnisse (insb. Task 4/5) sind mit Datum in Validation Evidence dokumentiert.
-- [ ] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt (insbesondere falls Claude Web entgegen Erwartung doch funktioniert oder ChatGPT Web entgegen Erwartung doch fehlschlägt).
-- [ ] Feature ist bereit für `/document` und `/commit`.
+- [x] Tasks 1–6 sind umgesetzt und validiert (oder mit dokumentiertem `needs_human`-Ergebnis abgeschlossen).
+- [x] Validierungsergebnisse (insb. Task 4/5) sind mit Datum in Validation Evidence dokumentiert.
+- [x] Plan-/PRD-Abweichungen sind dokumentiert und genehmigt (insbesondere falls Claude Web entgegen Erwartung doch funktioniert oder ChatGPT Web entgegen Erwartung doch fehlschlägt).
+- [x] Feature ist bereit für `/document` und `/commit`.
 
 ## Documentation Notes
 

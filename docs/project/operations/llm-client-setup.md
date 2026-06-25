@@ -50,8 +50,33 @@ Alternativ: Claude Desktop → **Settings** → **Developer** → **Edit Config*
 
 ### 1.3 MCP-Server Eintrag hinzufügen
 
-Füge folgenden Eintrag in das `mcpServers`-Objekt ein (ersetze die Platzhalter):
+Füge folgenden Eintrag in das `mcpServers`-Objekt ein (ersetze die Platzhalter). 
 
+**Wichtig für Windows-Nutzer:** Da `npx` unter Windows ein Batch-Skript ist und der Node-Installationspfad oft Leerzeichen enthält (z. B. `C:\Program Files\nodejs`), muss der Befehl über `cmd /c` aufgerufen werden, um Pfadfehler (`C:\Program` not found) zu vermeiden.
+
+**Konfiguration (Windows):**
+```json
+{
+  "mcpServers": {
+    "altiplano-vikunja": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "mcp-remote",
+        "https://mcp-tasks.melbjo.win/sse",
+        "--header",
+        "CF-Access-Client-Id: <deine-client-id>",
+        "--header",
+        "CF-Access-Client-Secret: <dein-client-secret>"
+      ]
+    }
+  }
+}
+```
+
+**Konfiguration (macOS / Linux):**
 ```json
 {
   "mcpServers": {
@@ -84,93 +109,107 @@ verbunden angezeigt werden.
 
 ## 2. Claude Web (claude.ai)
 
-Claude Web unterstützt Remote-MCP-Server über die **Integrations**-Funktion im Einstellungsmenü.
-Diese Funktion ist nur für **Pro/Team/Enterprise**-Accounts verfügbar.
+In neueren Versionen der Claude-Web-Benutzeroberfläche wurden „Integrations“ durch den Bereich **Customize (Anpassen)** ersetzt. Für Einzelbenutzer ist dort derzeit nur das Hochladen lokaler Plugins möglich; die direkte Konfiguration von benutzerdefinierten Remote-MCP-Servern per URL ist in der Web-Oberfläche für Standard-Accounts aktuell **nicht direkt verfügbar**.
 
-> **Einschränkung:** Claude Web erlaubt aktuell **keine** Injektion von benutzerdefinierten
-> HTTP-Headern über die Web-UI. Eine direkte Verbindung zum Cloudflare-gesicherten Endpunkt
-> ist daher **nur möglich, wenn die Access Policy auf `Bypass` gestellt wird** (nicht empfohlen)
-> oder du einen lokalen Proxy (ähnlich wie bei Claude Desktop) auf deinem PC betreibst.
->
-> **Empfehlung:** Verwende stattdessen **Claude Desktop** (Abschnitt 1) für eine sichere,
-> header-authentifizierte Verbindung.
+Zudem besteht bei Cloudflare Managed OAuth das bekannte Risiko eines ungelösten Bugs im OAuth-Handshake von Claude Web ([Anthropic Issue #410](https://github.com/anthropics/claude-ai-mcp/issues/410)), welcher dazu führen kann, dass der Connector hängen bleibt.
 
-Falls du den Endpunkt temporär ohne Cloudflare Access (nur für Tests aus einem vertrauenswürdigen
-Netzwerk) nutzen möchtest:
-1. Gehe zu **claude.ai** → **Settings** → **Integrations**.
-2. Klicke auf **Add Integration**.
-3. Gib die URL `https://mcp-tasks.melbjo.win/sse` ein.
-4. Klicke auf **Connect**.
+**Empfehlung:** Nutzen Sie für Claude weiterhin **Claude Desktop** (Abschnitt 1), da hier die verlässliche Verbindung über einen lokalen Proxy und Service-Token läuft.
 
 ---
 
-## 3. ChatGPT Web (chat.openai.com)
+## 3. ChatGPT Web (chatgpt.com)
 
-ChatGPT erlaubt das Hinzufügen von Remote-MCP-Servern über die **Connectors**-Funktion.
-Diese ist für **Pro/Team/Enterprise/Edu**-Accounts mit aktiviertem **Developer Mode** verfügbar.
+ChatGPT unterstützt Remote-MCP-Server über das Cloudflare MCP Server Portal unter Verwendung von **Managed OAuth**. Dadurch ist kein unsicherer Bypass mehr nötig und der Benutzer wird beim Verbinden sicher über Cloudflare Access authentifiziert.
 
-> **Einschränkung:** Wie Claude Web unterstützt die ChatGPT-Web-UI aktuell **keine** direkte
-> Konfiguration von benutzerdefinierten HTTP-Headern (wie die Cloudflare Service Token Header).
-> Das Verbinden eines Cloudflare-Access-gesicherten Endpunkts ist daher ohne Bypass **nicht
-> direkt** über die Web-UI möglich.
->
-> **Empfehlung:** Verwende **Claude Desktop** (Abschnitt 1) oder den **Codex CLI** (Abschnitt 4)
-> für eine vollständig gesicherte Verbindung.
+**Einrichtungsschritte:**
 
-Falls du den Endpunkt für Tests ohne Cloudflare-Sicherung freischaltest:
-1. Gehe zu **ChatGPT** → **Settings** → **Connectors**.
-2. Aktiviere **Developer Mode**.
-3. Klicke auf **Create** / **+ Custom Connector**.
-4. Gib folgende Details ein:
-   - **Name:** `Altiplano Vikunja MCP`
-   - **URL:** `https://mcp-tasks.melbjo.win/sse`
-   - **Transport:** `SSE`
-   - **Authentication:** `None` (da Cloudflare Access die Authentifizierung übernimmt)
-5. Bestätige mit „I trust this provider" und klicke auf **Create**.
+1. Gehen Sie in **ChatGPT Web** zu **Settings** (Einstellungen) → **Connectors** (Konnektoren).
+2. Aktivieren Sie den **Developer Mode** (Entwicklermodus).
+3. Klicken Sie auf **Create** / **+ Custom Connector**.
+4. Geben Sie folgende Details ein:
+   * **Name**: `Vikunja Altiplano`
+   * **Connection**: Wählen Sie `Server URL` und tragen Sie die Portal-Client-URL ein:
+     **`https://mcp.melbjo.win/mcp`** *(WICHTIG: Das Suffix `/mcp` am Ende ist zwingend erforderlich, damit der Streamable-HTTP-Transport genutzt wird).*
+   * **Authentication**: Wählen Sie **OAuth** aus der Liste.
+5. ChatGPT führt im Hintergrund die Auto-Discovery durch und lädt alle nötigen OAuth-Endpunkte selbstständig vom Portal.
+6. Setzen Sie das Häkchen bei *„I understand and want to continue“* und klicken Sie auf **Create**.
+7. Sie werden nun zur Cloudflare Access Login-Seite weitergeleitet. Authentifizieren Sie sich (z. B. per One-Time-PIN).
+8. Nach erfolgreicher Anmeldung leitet Cloudflare Sie zurück zu ChatGPT. Der Connector ist jetzt verbunden und die Tools sind aktiv.
+9. Starten Sie einen Chat und bitten Sie die KI: *„Zeige meine Vikunja Projekte“*, um die Verbindung zu verifizieren.
 
 ---
 
-## 4. OpenAI Codex CLI
+## 4. OpenAI Codex (CLI & Desktop)
 
-Der Codex CLI (`codex`) bietet native Unterstützung für Remote-MCP-Server mit benutzerdefinierten
-HTTP-Headern über seine `config.toml`-Konfigurationsdatei. Dies ist die **empfohlene Methode**
-für Codex.
+Sowohl das Codex CLI (`codex`) als auch die Codex Desktop App bieten native Unterstützung für Remote-MCP-Server mit benutzerdefinierten HTTP-Headern über eine zentrale `config.toml`-Konfigurationsdatei.
 
 ### 4.1 Konfigurationsdatei öffnen
 
+Die Konfigurationsdatei befindet sich im Benutzerverzeichnis unter `.codex/config.toml`.
+
+**Unter Windows (PowerShell):**
+```powershell
+# Erstellt das Verzeichnis falls nicht vorhanden und öffnet die Datei im Editor
+New-Item -ItemType Directory -Force -Path "$HOME\.codex"
+notepad "$HOME\.codex\config.toml"
+```
+
+**Unter Windows (CMD):**
+```cmd
+mkdir "%USERPROFILE%\.codex"
+notepad "%USERPROFILE%\.codex\config.toml"
+```
+
+**Unter macOS / Linux:**
 ```bash
-# Datei öffnen (erstellen, falls nicht vorhanden)
+mkdir -p ~/.codex
 nano ~/.codex/config.toml
 ```
 
 ### 4.2 MCP-Server Eintrag hinzufügen
 
+Da Codex standardmäßig local-spawning MCP-Server erwartet, binden wir die Remote-Verbindung über den gleichen `mcp-remote`-Proxy ein wie bei Claude Desktop.
+
 Füge folgenden Abschnitt in die `config.toml` ein:
 
+**Unter Windows:**
 ```toml
 [mcp_servers.altiplano-vikunja]
-url = "https://mcp-tasks.melbjo.win/sse"
-
-# Option A: Header direkt als statische Werte (einfacher, aber Secret im Klartext)
-http_headers = { "CF-Access-Client-Id" = "<deine-client-id>", "CF-Access-Client-Secret" = "<dein-client-secret>" }
-
-# Option B (empfohlen): Header aus Umgebungsvariablen lesen (Secret nicht im Klartext)
-# env_http_headers = { "CF-Access-Client-Id" = "CF_CLIENT_ID_VAR", "CF-Access-Client-Secret" = "CF_CLIENT_SECRET_VAR" }
+command = "cmd"
+args = [
+  "/c",
+  "npx",
+  "-y",
+  "mcp-remote",
+  "https://mcp-tasks.melbjo.win/sse",
+  "--header",
+  "CF-Access-Client-Id: <deine-client-id>",
+  "--header",
+  "CF-Access-Client-Secret: <dein-client-secret>"
+]
 ```
 
-> **Sicherheitshinweis:** Bevorzuge **Option B** (`env_http_headers`), um das Client Secret
-> nicht im Klartext in der Konfigurationsdatei zu speichern. Setze dazu die entsprechenden
-> Umgebungsvariablen in deiner Shell-Konfiguration (`.bashrc`, `.zshrc` etc.):
->
-> ```bash
-> export CF_CLIENT_ID_VAR="<deine-client-id>"
-> export CF_CLIENT_SECRET_VAR="<dein-client-secret>"
-> ```
+**Unter macOS / Linux:**
+```toml
+[mcp_servers.altiplano-vikunja]
+command = "npx"
+args = [
+  "-y",
+  "mcp-remote",
+  "https://mcp-tasks.melbjo.win/sse",
+  "--header",
+  "CF-Access-Client-Id: <deine-client-id>",
+  "--header",
+  "CF-Access-Client-Secret: <dein-client-secret>"
+]
+```
 
 ### 4.3 Verbindung testen
 
+Testen Sie die Verbindung über das CLI:
 ```bash
-codex --mcp-server altiplano-vikunja list-tools
+# Zeigt die Liste der konfigurierten MCP-Server an
+codex mcp list
 ```
 
 ---
