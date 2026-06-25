@@ -40,6 +40,6 @@ EXPOSE 8000
 # or we can check the status. If stdio is used, this healthcheck will fail, which is expected
 # since stdio is not designed for background container service).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl --fail -s http://localhost:${FASTMCP_PORT:-8000}/sse || exit 1
+  CMD curl --fail -s -I http://localhost:${FASTMCP_PORT:-8000}/sse || exit 1
 
 CMD ["altiplano"]
