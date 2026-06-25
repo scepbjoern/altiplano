@@ -8,6 +8,8 @@
 **Quelle:** PRD vikunja-mcp-server-v007.md, User Request  
 **Confidence Score:** 9/10 – Offene Punkte durch Recherche geklärt
 
+> **Korrektur (2026-06-25, vor `/execute`):** Die ursprüngliche Confidence-Einschätzung beruhte auf einer falschen API-Annahme (Details siehe „Offene Fragen"). **Dieser Plan ist pausiert.** Die aktive Umsetzung der OAuth-Anbindung erfolgt ab sofort in [plan-v002.md](plan-v002.md) (Cloudflare MCP Server Portal als Authorization Server). Dieses Dokument bleibt vollständig erhalten als **Fallback-Referenz** für einen Eigenbau-Authorization-Server, falls sich der Cloudflare-Portal-Ansatz als nicht tragfähig erweist.
+
 ## Feature Metadata
 
 | Feld | Wert |
@@ -25,6 +27,7 @@
 | Version | Datum | Anlass | Kurzbeschreibung |
 |---|---|---|---|
 | v001 | 2026-06-25 | Initiale Planung | Erster Feature-Plan erstellt |
+| v001 | 2026-06-25 | Recherche-Korrektur / Fork | `/execute`-Versuch deckte falsche API-Annahme auf (`fastmcp.OAuthProvider` statt nativer `mcp`-SDK-Klassen). Folge-Recherche zu Cloudflare MCP Server Portal durchgeführt. Aktive Umsetzung nach `plan-v002.md` verzweigt; dieses Dokument bleibt als Fallback-Referenz mit korrigierten API-Details in „Offene Fragen" erhalten. |
 
 ## Feature Description
 
@@ -1011,7 +1014,47 @@ Nach Abschluss erstellt `/document`:
 
 ## Offene Fragen
 
-*Keine offene Fragen mehr. Importpfad, API-Bindung (Lifespan + Constructor) und Redirect-URI-Dynamik wurden geklärt.*
+### Befund 1 (2026-06-25, `/execute`-Versuch): Plan-API existiert nicht im installierten Paket
+
+Bei Vorbereitung von Task 1–4 wurde verifiziert, dass die im Plan angenommene Klasse `fastmcp.server.auth.OAuthProvider` (Drittanbieter-Package `fastmcp` von jlowin, siehe gofastmcp.com) **nicht installiert ist und nicht in `pyproject.toml` steht**. Installiert ist ausschliesslich das offizielle `mcp`-SDK (v1.27.2, "nicht verhandelbar" laut `KILO_INSTRUCTIONS.md`), dessen `FastMCP` aus `mcp.server.fastmcp` stammt.
+
+**Konsequenz:** Task 3 (Klassenstruktur `VikunjaOAuthProvider(OAuthProvider)`, alle Methodensignaturen) und Task 4 (Integration via `auth=oauth_provider, lifespan=oauth_lifespan`) sind in der aktuellen Form **technisch nicht umsetzbar**. Ausführung gestoppt, kein stiller Fix im Produktivcode (kritische Architekturentscheidung laut `KILO_INSTRUCTIONS.md`, „Wann stoppen und fragen?").
+
+### Befund 2 (2026-06-25, Folge-Recherche): Korrigierte native `mcp`-SDK-API für einen Eigenbau-Authorization-Server
+
+**Diese Sektion bleibt bewusst erhalten als Referenz, falls der in Befund 3 gewählte Cloudflare-Portal-Ansatz (siehe `plan-v002.md`) später doch verworfen werden muss.** Im installierten `mcp`-SDK (v1.27.2) verifiziert (Quellcode-Inspektion):
+
+- Abstrakte Basisklasse: `mcp.server.auth.provider.OAuthAuthorizationServerProvider` (statt `OAuthProvider`). Methoden: `get_client(client_id) -> OAuthClientInformationFull | None`, `register_client(client_info: OAuthClientInformationFull) -> None`, `authorize(client, params: AuthorizationParams) -> str`, `load_authorization_code(client, code) -> AuthorizationCodeT | None`, `exchange_authorization_code(client, authorization_code) -> OAuthToken`, `load_refresh_token(client, token) -> RefreshTokenT | None`, `exchange_refresh_token(client, refresh_token, scopes) -> OAuthToken`, `revoke_token(token) -> None`. Signaturen weichen deutlich vom ursprünglichen Plan-Entwurf ab (z.B. `register_client` nimmt ein `OAuthClientInformationFull`-Objekt, kein dict; `authorize` nimmt `client` + `AuthorizationParams`, keine Einzelparameter wie `redirect_uri`/`scopes` separat).
+- Separate Klasse für reine Token-Prüfung: `mcp.server.auth.provider.TokenVerifier` mit `async verify_token(token: str) -> AccessToken | None` (im ursprünglichen Plan fälschlich als Methode auf demselben Provider angenommen).
+- Konfiguration: `mcp.server.auth.settings.AuthSettings` (Pflichtfeld `issuer_url`), übergeben an `FastMCP(..., auth_server_provider=..., auth=AuthSettings(...))` **oder** `FastMCP(..., token_verifier=..., auth=AuthSettings(...))` – niemals beide gleichzeitig (das SDK wirft sonst einen `ValueError`, verifiziert im Konstruktor-Code).
+- FastMCP **mountet bei gesetztem `auth_server_provider` automatisch** alle nötigen Routen (`create_auth_routes()` in `mcp.server.auth.routes`, im Quellcode bestätigt): `/authorize`, `/token`, `/register` (RFC 7591 Dynamic Client Registration), `/revoke`, `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource` (RFC 9728). Kein manuelles Routing nötig.
+- Eine Login-Seite (Username/Passwort) wäre über `FastMCP.custom_route(...)` (Starlette-Route, im installierten Paket bestätigt vorhanden) zu realisieren, nicht über eine Methode auf dem Provider wie im ursprünglichen Entwurf.
+- **Wichtig:** Sowohl das offizielle `mcp`-SDK-README als auch die FastMCP-Dokumentation (Drittanbieter) raten unabhängig voneinander vom Eigenbau eines vollständigen Authorization Servers ab. Beide empfehlen, dass MCP-Server **Resource Server** sein sollten (nur `TokenVerifier`, der Tokens eines *externen* Authorization Servers prüft), statt selbst Clients und Tokens zu verwalten.
+
+### Befund 3 (2026-06-25): Cloudflare MCP Server Portal als Authorization Server – gewählter Weg für `plan-v002.md`
+
+Cloudflare bietet ein produktisiertes Feature **„MCP Server Portals"** (Open Beta, Teil von Cloudflare Zero Trust/Access), das die Authorization-Server-Rolle vollständig übernimmt:
+- Verfügbar im **Free-Tier** (bis 50 Nutzer, dauerhaft kostenlos, keine Trial-Begrenzung).
+- Cloudflare Access wird selbst zum OAuth-2.1-Authorization-Server für Web-Clients (Login, DCR, PKCE, Discovery-Endpunkte).
+- Der Upstream-Server (Altiplano) authentifiziert sich gegenüber dem Portal weiterhin über **statische Credentials** (Custom Headers / Service Token – exakt das bereits implementierte `CF-Access-Client-Id`/`CF-Access-Client-Secret`-Muster aus dem Feature `cloudflare-service-token`).
+- **Praktisch kein neuer Code in Altiplano nötig** – der gesamte in diesem Plan vorgesehene SQLite-Token-Store, PKCE-Validierung, Login-Seite, Refresh-Rotation entfällt; das wird durch Cloudflare-Konfiguration ersetzt.
+
+### Befund 4 (2026-06-25): Bekannter, ungelöster Bug – Claude Web gegen Cloudflare Access Managed OAuth
+
+GitHub Issue [anthropics/claude-ai-mcp#410](https://github.com/anthropics/claude-ai-mcp/issues/410) (vollständiger Thread per GitHub-API geprüft, 4 Kommentare):
+- **Symptom:** claude.ai Web (und Claude Desktop App) schlagen beim Verbindungsversuch gegen einen Cloudflare-Access-„Managed OAuth"-MCP-Endpunkt fehl; Claude Code (CLI) funktioniert gegen dieselbe URL einwandfrei.
+- **Root Cause (Kommentar von `aspenas`, 2026-06-21):** claude.ai sendet den RFC-8707-`resource`-Parameter nicht (oder nicht zuverlässig) bei `/authorize`/`/token`; Cloudflare Access verlangt diesen Parameter zwingend und liefert sonst `invalid_target`. Zusätzlicher, unabhängiger Fehlerpfad: Die Protected-Resource-Metadata listet `"authentication_methods": ["cloudflared", "oauth"]` mit `cloudflared` (Browser-Cookie-Login) vor `oauth` – der Connector-Flow landet teils auf dem falschen Login-Pfad, bevor der eigentliche OAuth-`/authorize` überhaupt erreicht wird.
+- **Kein client-seitiger Workaround:** Die manuelle Rekonstruktion des `/authorize`-Requests durch `aspenas` (mit `&resource=...`) war ausschliesslich ein **Diagnose-Schritt** zur Ursachen-Eingrenzung, kein funktionierender End-to-End-Connector-Durchlauf. Niemand im Thread berichtet eine erfolgreiche reale claude.ai-Web-Verbindung.
+- **Status:** Issue wurde von Anthropic (`localden`) **am selben Tag des ersten Reports als „closed / not_planned" markiert – noch bevor die RFC-8707-Ursache gefunden wurde.** Drei weitere Reproduktions-/Analyse-Kommentare (zuletzt 2026-06-21) kamen auf das bereits geschlossene Issue, ohne erneute Reaktion von Anthropic.
+- **Konsequenz:** Für Claude Web ist der Cloudflare-Portal-Ansatz aktuell **nachweislich nicht nutzbar**, mit ungeklärtem Fix-Zeitpunkt.
+
+### Befund 5 (2026-06-25): ChatGPT Web – kein bestätigter Bug, positives Indiz
+
+Keine dokumentierten Fehlerberichte für ChatGPT Web gegen Cloudflare Access Managed OAuth gefunden (weder positiv noch negativ). OpenAIs eigene Apps-SDK-Dokumentation bestätigt jedoch explizit, dass ChatGPT den RFC-8707-`resource`-Parameter korrekt an `/authorize` **und** `/token` anhängt – genau der Parameter, dessen Fehlen die Ursache des Claude-Web-Bugs (Befund 4) ist. Das schliesst diesen spezifischen Fehlerpfad für ChatGPT wahrscheinlich aus, ist aber **nicht durch einen tatsächlichen Verbindungstest verifiziert** (insbesondere der zweite Fehlerpfad „cloudflared-first" in Befund 4 ist für ChatGPT ungeprüft).
+
+### Entscheidung
+
+Aktive Umsetzung verzweigt nach [`plan-v002.md`](plan-v002.md) (Cloudflare MCP Server Portal, Managed OAuth; Altiplano bleibt Resource Server ohne eigenen Token-Code). Dieses Dokument (`plan-v001.md`) bleibt **unverändert als Fallback-Referenz** für den Eigenbau-Ansatz erhalten – mit der in Befund 2 korrigierten, tatsächlich nutzbaren API, falls der Cloudflare-Portal-Ansatz sich als nicht tragfähig erweist (z.B. falls der Claude-Web-Bug dauerhaft ungelöst bleibt und das nicht akzeptabel ist). Tasks 1–6 bleiben auf `planned`, falls dieser Plan später reaktiviert wird; sie müssten dann auf die in Befund 2 dokumentierten korrekten Klassen/Methoden umgeschrieben werden.
 
 ## Plan Review Notes
 
