@@ -12,7 +12,21 @@ Credentials are resolved without storing secrets in a shared mcp.json:
 import base64
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+RelationKind = Literal[
+    "subtask",
+    "parenttask",
+    "related",
+    "duplicateof",
+    "duplicates",
+    "blocking",
+    "blockedby",
+    "precedes",
+    "follows",
+    "copiedfrom",
+    "copiedto",
+]
 
 import httpx
 from mcp.server.fastmcp import FastMCP
@@ -568,6 +582,60 @@ async def upload_task_attachment_from_url(task_id: int, url: str) -> dict:
         
     files = {"files": (filename, file_bytes)}
     return await _request("PUT", f"/tasks/{task_id}/attachments", files=files)
+
+
+# --- relations --------------------------------------------------------------
+##
+@mcp.tool()
+async def list_task_relations(task_id: int) -> list[dict]:
+    """List all relations of a task."""
+    task = await _request("GET", f"/tasks/{task_id}")
+    related = task.get("related_tasks")
+    
+    relations = []
+    if isinstance(related, list):
+        for r in related:
+            if isinstance(r, dict):
+                relations.append({
+                    "id": r.get("id"),
+                    "title": r.get("title"),
+                    "relation_kind": r.get("relation_kind"),
+                    "done": r.get("done", False),
+                    "priority": r.get("priority", 0),
+                })
+    elif isinstance(related, dict):
+        for relation_kind, tasks in related.items():
+            if isinstance(tasks, list):
+                for r in tasks:
+                    if isinstance(r, dict):
+                        relations.append({
+                            "id": r.get("id"),
+                            "title": r.get("title"),
+                            "relation_kind": r.get("relation_kind") or relation_kind,
+                            "done": r.get("done", False),
+                            "priority": r.get("priority", 0),
+                        })
+    return relations
+
+
+@mcp.tool()
+async def add_task_relation(task_id: int, other_task_id: int, relation_kind: RelationKind) -> dict:
+    """Create a relation between this task and another task.
+    
+    Common relation kinds are: subtask, parenttask, related, duplicateof, duplicates,
+    blocking, blockedby, precedes, follows, copiedfrom, copiedto.
+    """
+    payload = {
+        "other_task_id": other_task_id,
+        "relation_kind": relation_kind,
+    }
+    return await _request("PUT", f"/tasks/{task_id}/relations", json=payload)
+
+
+@mcp.tool()
+async def remove_task_relation(task_id: int, other_task_id: int, relation_kind: RelationKind) -> dict:
+    """Remove an existing relation between tasks."""
+    return await _request("DELETE", f"/tasks/{task_id}/relations/{relation_kind}/{other_task_id}")
 
 
 # --- users / assignees ------------------------------------------------------

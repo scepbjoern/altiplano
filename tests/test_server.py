@@ -43,6 +43,9 @@ async def test_mcp_initialization():
         "delete_task",
         "delete_comment",
         "delete_bucket",
+        "list_task_relations",
+        "add_task_relation",
+        "remove_task_relation",
     ]
     
     for tool in expected_tools:
@@ -645,5 +648,117 @@ async def test_tool_delete_bucket(mock_request):
     assert res == {"ok": True}
     mock_request.assert_any_call("GET", "/projects/1/views")
     mock_request.assert_any_call("DELETE", "/projects/1/views/10/buckets/2")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_list_task_relations(mock_request):
+    """Test list_task_relations tool."""
+    mock_request.return_value = {
+        "id": 1,
+        "title": "Base Task",
+        "related_tasks": [
+            {
+                "id": 2,
+                "title": "Subtask Task",
+                "relation_kind": "subtask",
+                "done": False,
+                "priority": 3,
+            },
+            {
+                "id": 3,
+                "title": "Blocking Task",
+                "relation_kind": "blocking",
+                "done": True,
+                "priority": 0,
+            }
+        ]
+    }
+    from altiplano.server import list_task_relations
+    result = await list_task_relations(task_id=1)
+    assert result == [
+        {"id": 2, "title": "Subtask Task", "relation_kind": "subtask", "done": False, "priority": 3},
+        {"id": 3, "title": "Blocking Task", "relation_kind": "blocking", "done": True, "priority": 0}
+    ]
+    mock_request.assert_called_once_with("GET", "/tasks/1")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_list_task_relations_empty(mock_request):
+    """Test list_task_relations tool when there are no related tasks."""
+    mock_request.return_value = {"id": 1, "title": "Base Task"}
+    from altiplano.server import list_task_relations
+    result = await list_task_relations(task_id=1)
+    assert result == []
+    mock_request.assert_called_once_with("GET", "/tasks/1")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_list_task_relations_dict(mock_request):
+    """Test list_task_relations tool with a dictionary of related tasks (grouped by kind)."""
+    mock_request.return_value = {
+        "id": 1,
+        "title": "Base Task",
+        "related_tasks": {
+            "subtask": [
+                {
+                    "id": 2,
+                    "title": "Subtask Task",
+                    "done": False,
+                    "priority": 3,
+                }
+            ],
+            "blocking": [
+                {
+                    "id": 3,
+                    "title": "Blocking Task",
+                    "done": True,
+                    "priority": 0,
+                }
+            ]
+        }
+    }
+    from altiplano.server import list_task_relations
+    result = await list_task_relations(task_id=1)
+    assert len(result) == 2
+    
+    subtask = next(r for r in result if r["id"] == 2)
+    assert subtask["relation_kind"] == "subtask"
+    assert subtask["title"] == "Subtask Task"
+    
+    blocking = next(r for r in result if r["id"] == 3)
+    assert blocking["relation_kind"] == "blocking"
+    assert blocking["title"] == "Blocking Task"
+    
+    mock_request.assert_called_once_with("GET", "/tasks/1")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_add_task_relation(mock_request):
+    """Test add_task_relation tool."""
+    mock_request.return_value = {"id": 1, "other_task_id": 2, "relation_kind": "subtask"}
+    from altiplano.server import add_task_relation
+    result = await add_task_relation(task_id=1, other_task_id=2, relation_kind="subtask")
+    assert result == {"id": 1, "other_task_id": 2, "relation_kind": "subtask"}
+    mock_request.assert_called_once_with(
+        "PUT",
+        "/tasks/1/relations",
+        json={"other_task_id": 2, "relation_kind": "subtask"}
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_remove_task_relation(mock_request):
+    """Test remove_task_relation tool."""
+    mock_request.return_value = {"ok": True}
+    from altiplano.server import remove_task_relation
+    result = await remove_task_relation(task_id=1, other_task_id=2, relation_kind="subtask")
+    assert result == {"ok": True}
+    mock_request.assert_called_once_with("DELETE", "/tasks/1/relations/subtask/2")
+
 
 
