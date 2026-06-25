@@ -85,8 +85,35 @@ curl -i http://localhost:6274/sse
 ```
 *Erwartet wird eine Antwort mit Status `200 OK` und `Content-Type: text/event-stream`.*
 
-**Cloudflare / Reverse Proxy Konfiguration:**
-Leite Anfragen an z.B. `mcp-tasks.melbjo.win` auf `http://<IP-des-Hosts>:6274` weiter. Der LLM-Client (z.B. ChatGPT, Claude) kommuniziert dann über diese externe URL mit dem SSE-Endpunkt.
+**Cloudflare / Reverse Proxy Konfiguration & Sicherheit (WICHTIG):**
+
+Da der MCP-Server in seiner `.env`-Datei bereits deinen `VIKUNJA_API_TOKEN` hinterlegt hat, hat jeder, der diesen MCP-Endpunkt erreicht, **vollen Zugriff auf deine Vikunja-Daten**. Es ist daher zwingend erforderlich, diesen Endpunkt abzusichern!
+
+Wenn du Cloudflare nutzt, gehst du am besten wie folgt vor:
+
+1. **Tunnel Route:** 
+   Richte in Cloudflare Zero Trust unter *Networks -> Tunnels* eine Route für `mcp-tasks.melbjo.win` ein, die auf `http://<IP-des-Hosts>:6274` zeigt.
+
+2. **Access Application anlegen:** 
+   Gehe zu *Access -> Applications* und erstelle eine neue App für `mcp-tasks.melbjo.win`.
+
+3. **Service Token erstellen (für den LLM-Client):**
+   Da dein LLM-Client (z. B. Claude Desktop, Flowise, LangChain) ein maschineller Client ist, kann er keinen Web-Login ausführen.
+   - Gehe zu *Access -> Service Auth -> Service Tokens* und erstelle einen neuen Token (z.B. "LLM-Client-MCP").
+   - Kopiere dir die *Client ID* und das *Client Secret*.
+
+4. **Access Policy definieren:**
+   - Gehe zurück zu deiner erstellten Application für `mcp-tasks.melbjo.win`.
+   - Erstelle eine neue Policy:
+     - **Action:** `Service Auth` (oder `Bypass` bei älteren Ansichten, aber spezifisch für Service Tokens).
+     - **Include:** `Service Token` -> Wähle deinen erstellten Token aus.
+
+5. **LLM-Client konfigurieren:**
+   Wenn du nun deinen LLM-Client anweist, sich mit dem MCP-Server zu verbinden (die URL lautet dann z. B. `https://mcp-tasks.melbjo.win/sse`), musst du im Client konfigurieren, dass er bei jedem Request folgende HTTP-Header mitsendet:
+   - `CF-Access-Client-Id: <deine-client-id>`
+   - `CF-Access-Client-Secret: <dein-client-secret>`
+
+Nur Anfragen, die diese Header besitzen, werden von Cloudflare an deinen MCP-Container durchgelassen.
 
 ---
 
