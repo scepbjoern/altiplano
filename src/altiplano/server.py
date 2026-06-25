@@ -9,6 +9,7 @@ Credentials are resolved without storing secrets in a shared mcp.json:
      override with ALTIPLANO_CONFIG). Keep it chmod 600.
 """
 
+import base64
 import os
 from pathlib import Path
 from typing import Any
@@ -65,7 +66,10 @@ def _headers() -> dict[str, str]:
 
 
 async def _request(method: str, path: str, **kwargs: Any) -> Any:
-    async with httpx.AsyncClient(base_url=_base(), headers=_headers(), timeout=30) as client:
+    headers = _headers()
+    if "files" in kwargs:
+        headers.pop("Content-Type", None)
+    async with httpx.AsyncClient(base_url=_base(), headers=headers, timeout=30) as client:
         r = await client.request(method, path, **kwargs)
         try:
             r.raise_for_status()
@@ -457,6 +461,76 @@ async def list_comments(task_id: int) -> list[dict]:
 async def add_comment(task_id: int, comment: str) -> dict:
     """Add a comment to a task."""
     return await _request("PUT", f"/tasks/{task_id}/comments", json={"comment": comment})
+
+
+# --- attachments ------------------------------------------------------------
+##
+@mcp.tool()
+async def list_task_attachments(task_id: int) -> list[dict]:
+    """List attachments on a task."""
+    data = await _request("GET", f"/tasks/{task_id}/attachments")
+    return [
+        {
+            "id": a.get("id"),
+            "name": a.get("file", {}).get("name") if a.get("file") else a.get("name"),
+            "size": a.get("file", {}).get("size") if a.get("file") else a.get("size"),
+            "created": a.get("created"),
+        }
+        for a in (data or [])
+    ]
+
+
+@mcp.tool()
+async def delete_task_attachment(task_id: int, attachment_id: int) -> dict:
+    """Delete an attachment from a task."""
+    return await _request("DELETE", f"/tasks/{task_id}/attachments/{attachment_id}")
+
+
+@mcp.tool()
+async def get_task_frontend_url(task_id: int) -> str:
+    """Get the clickable web UI link for a task.
+    Use this to tell the user where to manually upload files if the file is too large for Base64 (> 2MB).
+    """
+    base = _base()
+    # Remove trailing /api/v1 if present to get the frontend domain
+    if base.endswith("/api/v1"):
+        base = base[:-7]
+    return f"{base}/tasks/{task_id}"
+
+
+@mcp.tool()
+async def upload_task_attachment_base64(task_id: int, filename: str, content_base64: str) -> dict:
+    """Upload a file to a task using a Base64 encoded string.
+    DO NOT use this for files larger than 2MB. If the file is >2MB, call `get_task_frontend_url` instead
+    and instruct the user to click the link and upload the file manually in the Vikunja UI.
+    """
+    # Check approximate size (Base64 string length * 0.75 gives bytes)
+    if len(content_base64) * 0.75 > 2 * 1024 * 1024:
+        raise ValueError("File exceeds 2MB limit. Call get_task_frontend_url and ask user to upload manually.")
+    
+    file_bytes = base64.b64decode(content_base64)
+    # files tuple format for httpx: (filename, content)
+    files = {"files": (filename, file_bytes)}
+    return await _request("PUT", f"/tasks/{task_id}/attachments", files=files)
+
+
+@mcp.tool()
+async def upload_task_attachment_from_url(task_id: int, url: str) -> dict:
+    """Download a file from a public URL and attach it to a task.
+    Use this if the user provides a web link to a file they want attached.
+    """
+    # Extract a filename from the URL, or use a default
+    filename = url.split("/")[-1].split("?")[0]
+    if not filename:
+        filename = "downloaded_attachment"
+        
+    async with httpx.AsyncClient(follow_redirects=True, timeout=30) as dl_client:
+        r = await dl_client.get(url)
+        r.raise_for_status()
+        file_bytes = r.content
+        
+    files = {"files": (filename, file_bytes)}
+    return await _request("PUT", f"/tasks/{task_id}/attachments", files=files)
 
 
 # --- users / assignees ------------------------------------------------------

@@ -121,8 +121,9 @@ Hinzufügen von pytest Unit-Tests mit Mocks für Base64 und `httpx`-Downloads.
 
 ### Task 1: UPDATE `_request` in `src/altiplano/server.py`
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** `_request` soll `Content-Type` verwerfen, wenn `files` vorhanden ist.  
+**Validation:** `uv run pytest` ausgeführt. Alle 18 Tests bestanden ohne Regressionen.
 **IMPLEMENT:** 
 In `_request`:
 ```python
@@ -134,9 +135,10 @@ In `_request`:
 
 ### Task 2: ADD `list` and `delete` attachment tools
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Tools zum Listen und Löschen.  
-**IMPLEMENT:** 
+**Validation:** `uv run pytest` ausgeführt. Alle 18 Tests bestanden ohne Regressionen.
+**IMPLEMENT:**  
 ```python
 @mcp.tool()
 async def list_task_attachments(task_id: int) -> list[dict]:
@@ -160,8 +162,9 @@ async def delete_task_attachment(task_id: int, attachment_id: int) -> dict:
 
 ### Task 3: ADD `get_task_frontend_url`
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Helfer-Tool, das einen direkten Task-Link liefert.  
+**Validation:** `uv run pytest` ausgeführt. Alle 18 Tests bestanden ohne Regressionen.
 **IMPLEMENT:** 
 ```python
 @mcp.tool()
@@ -178,9 +181,10 @@ async def get_task_frontend_url(task_id: int) -> str:
 
 ### Task 4: ADD `upload_task_attachment_base64`
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Base64-Upload mit 2MB-Limit.  
-**IMPLEMENT:** 
+**Validation:** `uv run pytest` ausgeführt. Alle 18 Tests bestanden ohne Regressionen.
+**IMPLEMENT:**  
 ```python
 import base64
 
@@ -202,10 +206,10 @@ async def upload_task_attachment_base64(task_id: int, filename: str, content_bas
 
 ### Task 5: ADD `upload_task_attachment_from_url`
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Download einer externen URL und Upload an Vikunja.  
+**Validation:** `uv run pytest` ausgeführt. Alle 18 Tests bestanden ohne Regressionen.
 **IMPLEMENT:** 
-```python
 @mcp.tool()
 async def upload_task_attachment_from_url(task_id: int, url: str) -> dict:
     """Download a file from a public URL and attach it to a task.
@@ -227,8 +231,9 @@ async def upload_task_attachment_from_url(task_id: int, url: str) -> dict:
 
 ### Task 6: UPDATE `tests/test_server.py`
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** Unit-Tests für alle 5 neuen Tools.  
+**Validation:** `uv run pytest` ausgeführt. 23/23 Tests bestanden (5 neue Tests für alle Anhangs-Tools erfolgreich hinzugefügt).
 **IMPLEMENT:** 
 - Mock `_request` für `list`, `delete`, `upload_base64` und `upload_from_url`.
 - Test für Grössenlimit-Exception in `upload_base64`.
@@ -239,15 +244,21 @@ async def upload_task_attachment_from_url(task_id: int, url: str) -> dict:
 
 ## Acceptance Criteria
 
-- [ ] `list_task_attachments` & `delete_task_attachment` existieren.
-- [ ] `upload_task_attachment_base64` lehnt Strings > ~2.66 MB (entspricht 2MB binär) ab.
-- [ ] `upload_task_attachment_from_url` lädt die Datei korrekt über HTTP herunter.
-- [ ] `get_task_frontend_url` berechnet den Link korrekt aus `VIKUNJA_URL`.
-- [ ] Content-Type Header Workaround im `_request` funktioniert.
-- [ ] Tests sind grün.
+- [x] `list_task_attachments` & `delete_task_attachment` existieren.
+- [x] `upload_task_attachment_base64` lehnt Strings > ~2.66 MB (entspricht 2MB binär) ab.
+- [x] `upload_task_attachment_from_url` lädt die Datei korrekt über HTTP herunter.
+- [x] `get_task_frontend_url` berechnet den Link korrekt aus `VIKUNJA_URL`.
+- [x] Content-Type Header Workaround im `_request` funktioniert.
+- [x] Tests sind grün.
 
 ## Completion Checklist
 
-- [ ] Alle Tasks sind umgesetzt
-- [ ] Jeder Task wurde validiert
-- [ ] Bereit für `/document` und `/commit`
+- [x] Alle Tasks sind umgesetzt
+- [x] Jeder Task wurde validiert
+- [x] Bereit für `/document` und `/commit`
+
+## Documentation Results
+
+Folgende Dokumentationsdateien wurden generiert:
+- [User Guide](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/dateianhaenge/user-guide.md)
+- [Developer Notes](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/dateianhaenge/developer-notes.md)

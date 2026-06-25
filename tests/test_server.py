@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 from altiplano.server import mcp, list_projects
 
 @pytest.mark.anyio
@@ -35,6 +35,11 @@ async def test_mcp_initialization():
         "create_bucket",
         "update_bucket",
         "move_task_to_bucket",
+        "list_task_attachments",
+        "delete_task_attachment",
+        "get_task_frontend_url",
+        "upload_task_attachment_base64",
+        "upload_task_attachment_from_url",
     ]
     
     for tool in expected_tools:
@@ -480,4 +485,102 @@ async def test_resolve_kanban_view_id_missing(mock_request):
     from altiplano.server import list_buckets
     with pytest.raises(RuntimeError, match="Project 1 has no Kanban view"):
         await list_buckets(project_id=1)
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_list_task_attachments(mock_request):
+    """Test list_task_attachments tool."""
+    mock_request.return_value = [
+        {
+            "id": 42,
+            "file": {"name": "test_file.png", "size": 12345},
+            "created": "2023-01-01T00:00:00Z"
+        },
+        {
+            "id": 43,
+            "name": "other_file.txt",
+            "size": 54321,
+            "created": "2023-01-02T00:00:00Z"
+        }
+    ]
+    from altiplano.server import list_task_attachments
+    result = await list_task_attachments(task_id=1)
+    assert result == [
+        {"id": 42, "name": "test_file.png", "size": 12345, "created": "2023-01-01T00:00:00Z"},
+        {"id": 43, "name": "other_file.txt", "size": 54321, "created": "2023-01-02T00:00:00Z"}
+    ]
+    mock_request.assert_called_once_with("GET", "/tasks/1/attachments")
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_delete_task_attachment(mock_request):
+    """Test delete_task_attachment tool."""
+    mock_request.return_value = {"ok": True}
+    from altiplano.server import delete_task_attachment
+    result = await delete_task_attachment(task_id=1, attachment_id=42)
+    assert result == {"ok": True}
+    mock_request.assert_called_once_with("DELETE", "/tasks/1/attachments/42")
+
+
+@pytest.mark.anyio
+async def test_tool_get_task_frontend_url():
+    """Test get_task_frontend_url tool."""
+    from altiplano.server import get_task_frontend_url
+    with patch("altiplano.server._conf", return_value="https://tasks.melbjo.win/api/v1"):
+        url = await get_task_frontend_url(task_id=5)
+        assert url == "https://tasks.melbjo.win/tasks/5"
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_upload_task_attachment_base64(mock_request):
+    """Test upload_task_attachment_base64 tool."""
+    mock_request.return_value = {"id": 100}
+    from altiplano.server import upload_task_attachment_base64
+    
+    # 1. Successful upload
+    content = "SGVsbG8gV29ybGQh"  # "Hello World!" in base64
+    result = await upload_task_attachment_base64(task_id=1, filename="hello.txt", content_base64=content)
+    assert result == {"id": 100}
+    
+    # Verify the mocked request payload
+    called_args, called_kwargs = mock_request.call_args
+    assert called_args == ("PUT", "/tasks/1/attachments")
+    assert "files" in called_kwargs
+    assert called_kwargs["files"]["files"][0] == "hello.txt"
+    assert called_kwargs["files"]["files"][1] == b"Hello World!"
+
+    # 2. Exceed limit (2MB limit). Construct a string that exceeds 2.66 million characters
+    too_large_content = "A" * (3 * 1024 * 1024)
+    with pytest.raises(ValueError, match="File exceeds 2MB limit"):
+        await upload_task_attachment_base64(task_id=1, filename="large.txt", content_base64=too_large_content)
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+@patch("httpx.AsyncClient")
+async def test_tool_upload_task_attachment_from_url(mock_client_class, mock_request):
+    """Test upload_task_attachment_from_url tool."""
+    mock_client = AsyncMock()
+    mock_client_class.return_value.__aenter__.return_value = mock_client
+    
+    mock_response = MagicMock()
+    mock_response.content = b"Downloaded content"
+    mock_response.raise_for_status = MagicMock()
+    mock_client.get.return_value = mock_response
+
+    mock_request.return_value = {"id": 101}
+    from altiplano.server import upload_task_attachment_from_url
+    
+    result = await upload_task_attachment_from_url(task_id=2, url="https://example.com/some/file.pdf?query=1")
+    assert result == {"id": 101}
+
+    mock_client.get.assert_called_once_with("https://example.com/some/file.pdf?query=1")
+    called_args, called_kwargs = mock_request.call_args
+    assert called_args == ("PUT", "/tasks/2/attachments")
+    assert "files" in called_kwargs
+    assert called_kwargs["files"]["files"][0] == "file.pdf"
+    assert called_kwargs["files"]["files"][1] == b"Downloaded content"
 
