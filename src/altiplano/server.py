@@ -323,7 +323,16 @@ async def update_task(
 async def set_reminders(task_id: int, reminders: list[str]) -> dict:
     """Replace a task's reminders with the given ISO 8601 datetimes. Empty list clears them."""
     task = await _request("GET", f"/tasks/{task_id}")
-    payload: dict[str, Any] = {"title": task["title"], "reminders": [{"reminder": r} for r in reminders]}
+    payload: dict[str, Any] = {
+        "title": task["title"],
+        "description": task.get("description", ""),
+        "done": task.get("done", False),
+        "priority": task.get("priority", 0),
+        "due_date": task.get("due_date"),
+        "start_date": task.get("start_date"),
+        "end_date": task.get("end_date"),
+        "reminders": [{"reminder": r} for r in reminders]
+    }
     if "updated" in task:
         payload["updated"] = task["updated"]
     return await _request("POST", f"/tasks/{task_id}", json=payload)

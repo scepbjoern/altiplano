@@ -231,6 +231,50 @@ async def test_tool_move_task_to_project(mock_request):
 
 @pytest.mark.anyio
 @patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_set_reminders(mock_request):
+    """Test the set_reminders tool merges caller changes onto the full current task to prevent data loss."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/tasks/1":
+            return {
+                "id": 1,
+                "title": "Task with Reminders",
+                "description": "Don't lose this description",
+                "done": False,
+                "priority": 3,
+                "due_date": "2026-06-30T23:59:00+02:00",
+                "start_date": None,
+                "end_date": None,
+                "updated": "2023-01-01T00:00:00Z"
+            }
+        if method == "POST" and path == "/tasks/1":
+            return {"id": 1, "title": "Task with Reminders", "updated": "2023-01-01T00:00:00Z"}
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import set_reminders
+    result = await set_reminders(task_id=1, reminders=["2026-06-30T09:00:00+02:00"])
+    
+    assert mock_request.call_count == 2
+    mock_request.assert_any_call("GET", "/tasks/1")
+    # POST payload must include all existing fields plus the new reminders
+    mock_request.assert_any_call(
+        "POST",
+        "/tasks/1",
+        json={
+            "title": "Task with Reminders",
+            "description": "Don't lose this description",
+            "done": False,
+            "priority": 3,
+            "due_date": "2026-06-30T23:59:00+02:00",
+            "start_date": None,
+            "end_date": None,
+            "reminders": [{"reminder": "2026-06-30T09:00:00+02:00"}],
+            "updated": "2023-01-01T00:00:00Z",
+        },
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
 async def test_tool_update_task(mock_request):
     """Test the update_task tool merges caller changes onto the full current task."""
     async def mock_request_side_effect(method, path, **kwargs):
@@ -307,25 +351,6 @@ async def test_tool_update_task_partial(mock_request):
             "updated": "2023-01-01T00:00:00Z",
         }
     )
-
-
-@pytest.mark.anyio
-@patch("altiplano.server._request", new_callable=AsyncMock)
-async def test_tool_set_reminders(mock_request):
-    """Test the set_reminders tool including updated timestamp and title."""
-    async def mock_request_side_effect(method, path, **kwargs):
-        if method == "GET" and path == "/tasks/1":
-            return {"id": 1, "title": "Test Task", "updated": "2023-01-01T00:00:00Z"}
-        if method == "POST" and path == "/tasks/1":
-            return {"id": 1, "reminders": [{"reminder": "2023-02-02T12:00:00Z"}], "updated": "2023-01-01T00:00:00Z"}
-        return {}
-    mock_request.side_effect = mock_request_side_effect
-    from altiplano.server import set_reminders
-    result = await set_reminders(task_id=1, reminders=["2023-02-02T12:00:00Z"])
-    assert result["id"] == 1
-    mock_request.assert_any_call("GET", "/tasks/1")
-    mock_request.assert_any_call("POST", "/tasks/1", json={"title": "Test Task", "reminders": [{"reminder": "2023-02-02T12:00:00Z"}], "updated": "2023-01-01T00:00:00Z"})
-
 
 @pytest.mark.anyio
 @patch("altiplano.server._request", new_callable=AsyncMock)
