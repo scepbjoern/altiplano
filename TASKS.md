@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| Project Identifier | planned | [plan](docs/project/features/project-identifier/plan-v001.md) | 2026-06-29 |
 
 ## Abgeschlossene Features
 
