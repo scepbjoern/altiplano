@@ -10,7 +10,8 @@ Filtering and sorting are passed straight to the Vikunja API (server-side), so t
 
 Projects:
 - `list_projects` (includes `parent_project_id`, shows sub-project nesting)
-- `create_project` (title, parent_project_id?, description?) — pass `parent_project_id` for a sub-project
+- `create_project` (title, parent_project_id?, description?, hex_color?, identifier?) — pass `parent_project_id` for a sub-project
+- `update_project` (project_id, title?, description?, hex_color?, parent_project_id?, identifier?)
 
 Tasks:
 - `list_tasks` (project_id, filter, sort_by, page, per_page)

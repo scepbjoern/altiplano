@@ -14,12 +14,12 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| Project Identifier | planned | [plan](docs/project/features/project-identifier/plan-v001.md) | 2026-06-29 |
 
 ## Abgeschlossene Features
 
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| Project Identifier | [plan](docs/project/features/project-identifier/plan-v001.md) | 2026-06-29 |
 | Globales Label Management | [plan](docs/project/features/globales-label-management/plan-v001.md) | 2026-06-25 |
 | OAuth 2.1 Authentifizierung | [plan](docs/project/features/oauth-authentication/plan-v003.md) | 2026-06-25 |
 | Remote HTTP MCP | [plan](docs/project/features/remote-http-mcp/plan-v004.md) | 2026-06-25 |
