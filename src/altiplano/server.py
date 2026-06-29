@@ -150,10 +150,12 @@ async def create_project(
     parent_project_id: int | None = None,
     description: str | None = None,
     hex_color: str | None = None,
+    identifier: str | None = None,
 ) -> dict:
     """Create a project. Pass `parent_project_id` to create it as a sub-project.
 
     Use `hex_color` to set a custom color (e.g. "ff0000").
+    Use `identifier` to set a custom project identifier (e.g. "SHOP").
     """
     payload: dict[str, Any] = {"title": title}
     if parent_project_id is not None:
@@ -162,6 +164,8 @@ async def create_project(
         payload["description"] = description
     if hex_color is not None:
         payload["hex_color"] = hex_color
+    if identifier is not None:
+        payload["identifier"] = identifier
     return await _request("PUT", "/projects", json=payload)
 
 
@@ -172,11 +176,13 @@ async def update_project(
     description: str | None = None,
     hex_color: str | None = None,
     parent_project_id: int | None = None,
+    identifier: str | None = None,
 ) -> dict:
     """Update a project. Only the fields you pass are changed.
 
     Use `hex_color` to set a custom color (e.g. "ff0000").
     Use `parent_project_id` to nest the project or set to 0 to make it a root project.
+    Use `identifier` to set a custom project identifier (e.g. "SHOP"), or "" to clear it.
     """
     # Build a dict of only the caller-supplied changes (non-None values).
     changes: dict[str, Any] = {}
@@ -188,6 +194,8 @@ async def update_project(
         changes["hex_color"] = hex_color
     if parent_project_id is not None:
         changes["parent_project_id"] = parent_project_id
+    if identifier is not None:
+        changes["identifier"] = identifier
     if not changes:
         raise ValueError("No fields to update")
 
@@ -199,6 +207,7 @@ async def update_project(
         "description": project.get("description", ""),
         "hex_color": project.get("hex_color", ""),
         "parent_project_id": project.get("parent_project_id", 0),
+        "identifier": project.get("identifier", ""),
     }
     if "updated" in project:
         payload["updated"] = project["updated"]

@@ -154,6 +154,77 @@ async def test_tool_update_project(mock_request):
             "description": "Old desc",      # carried over from GET
             "hex_color": "00ff00",          # changed
             "parent_project_id": 0,         # carried over from GET
+            "identifier": "",               # carried over as default empty string
+            "updated": "2023-01-01T00:00:00Z",
+        },
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_update_project_identifier(mock_request):
+    """Test updating the project identifier and verifying that it is preserved when other fields are updated."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/projects/1":
+            return {
+                "id": 1,
+                "title": "Project Title",
+                "description": "desc",
+                "hex_color": "aabbcc",
+                "parent_project_id": 0,
+                "identifier": "SHOP",
+                "updated": "2023-01-01T00:00:00Z",
+            }
+        if method == "POST" and path == "/projects/1":
+            return {"id": 1, "title": "Project Title", "updated": "2023-01-01T00:00:00Z"}
+        return {}
+
+    mock_request.side_effect = mock_request_side_effect
+    from altiplano.server import update_project
+
+    # Case 1: Update the identifier to a new value
+    await update_project(project_id=1, identifier="NEWSHOP")
+    mock_request.assert_any_call(
+        "POST",
+        "/projects/1",
+        json={
+            "title": "Project Title",
+            "description": "desc",
+            "hex_color": "aabbcc",
+            "parent_project_id": 0,
+            "identifier": "NEWSHOP",
+            "updated": "2023-01-01T00:00:00Z",
+        },
+    )
+
+    # Case 2: Update another field (e.g. hex_color) and verify that the existing identifier "SHOP" is preserved
+    mock_request.reset_mock()
+    await update_project(project_id=1, hex_color="112233")
+    mock_request.assert_any_call(
+        "POST",
+        "/projects/1",
+        json={
+            "title": "Project Title",
+            "description": "desc",
+            "hex_color": "112233",
+            "parent_project_id": 0,
+            "identifier": "SHOP",
+            "updated": "2023-01-01T00:00:00Z",
+        },
+    )
+
+    # Case 3: Clear the identifier by passing ""
+    mock_request.reset_mock()
+    await update_project(project_id=1, identifier="")
+    mock_request.assert_any_call(
+        "POST",
+        "/projects/1",
+        json={
+            "title": "Project Title",
+            "description": "desc",
+            "hex_color": "aabbcc",
+            "parent_project_id": 0,
+            "identifier": "",
             "updated": "2023-01-01T00:00:00Z",
         },
     )
@@ -382,6 +453,42 @@ async def test_tool_create_project(mock_request):
             "title": "New Project",
             "description": "A new project",
             "hex_color": "00ff00"
+        }
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_create_project_with_identifier(mock_request):
+    """Test the create_project tool with identifier parameter."""
+    mock_request.return_value = {
+        "id": 1,
+        "title": "New Project",
+        "description": "A new project",
+        "hex_color": "00ff00",
+        "parent_project_id": 0,
+        "identifier": "SHOP"
+    }
+
+    from altiplano.server import create_project
+    result = await create_project(
+        title="New Project",
+        description="A new project",
+        hex_color="00ff00",
+        identifier="SHOP"
+    )
+
+    assert result["id"] == 1
+    assert result["title"] == "New Project"
+    # Verify that create_project sent the identifier in the payload
+    mock_request.assert_called_once_with(
+        "PUT",
+        "/projects",
+        json={
+            "title": "New Project",
+            "description": "A new project",
+            "hex_color": "00ff00",
+            "identifier": "SHOP"
         }
     )
 
