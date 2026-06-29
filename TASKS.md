@@ -11,15 +11,15 @@
 - Status-Werte: planned | in_progress | needs_human | validating | done
 
 ## Aktive Features
-
+ 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| Labels in create_task | planned | [plan](docs/project/features/labels-in-create-task/plan-v001.md) | 2026-06-29 |
-
+ 
 ## Abgeschlossene Features
-
+ 
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| Labels in create_task | [plan](docs/project/features/labels-in-create-task/plan-v001.md) | 2026-06-29 |
 | Project Identifier | [plan](docs/project/features/project-identifier/plan-v001.md) | 2026-06-29 |
 | Globales Label Management | [plan](docs/project/features/globales-label-management/plan-v001.md) | 2026-06-25 |
 | OAuth 2.1 Authentifizierung | [plan](docs/project/features/oauth-authentication/plan-v003.md) | 2026-06-25 |

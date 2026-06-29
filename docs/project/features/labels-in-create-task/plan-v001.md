@@ -2,7 +2,7 @@
 
 ## Status
 
-**Feature-Status:** planned  
+**Feature-Status:** done  
 **Erstellt:** 2026-06-29  
 **Plan-Version:** v001
 **Quelle:** User Request, PRD v011  
@@ -136,7 +136,7 @@ Tests in `test_server.py` hinzufügen (Erfolgsfall und Partial-Error-Fall).
 
 ### Task 1: UPDATE src/altiplano/server.py
 
-**Status:** planned  
+**Status:** done  
 **Ziel:** `create_task` unterstützt `label_ids`.  
 **IMPLEMENT:** 
 - Signatur: `label_ids: list[int] | None = None` hinzufügen.
@@ -147,21 +147,21 @@ Tests in `test_server.py` hinzufügen (Erfolgsfall und Partial-Error-Fall).
 - `return res`  
 **PATTERN:** Fehlerbehandlung ähnlich wie `_request` Exception Wrapping.  
 **ACCEPTANCE CRITERIA:**
-- [ ] Signatur ist aktualisiert.
-- [ ] Erfolgreiche Zuweisung schlägt nicht fehl.
-- [ ] Fehlerhafte Zuweisungen werden in `label_errors` gesammelt.
+- [x] Signatur ist aktualisiert.
+- [x] Erfolgreiche Zuweisung schlägt nicht fehl.
+- [x] Fehlerhafte Zuweisungen werden in `label_errors` gesammelt.
 
 ### Task 2: UPDATE tests/test_server.py
-
-**Status:** planned  
+ 
+**Status:** done  
 **Ziel:** Testabdeckung für die neuen Funktionalitäten in `create_task`.  
 **IMPLEMENT:** 
 - Test `test_tool_create_task` (falls vorhanden, sonst neu) mit und ohne `label_ids`.
 - Test `test_tool_create_task_with_label_errors` schreiben, in dem der Mock für einen Label-Call einen Fehler wirft.  
 **PATTERN:** `test_tool_complete_task_with_comment` (Mock mit Side-Effect für verschiedene Routen).  
 **ACCEPTANCE CRITERIA:**
-- [ ] Test für erfolgreiche Erstellung inkl. Labels ist grün.
-- [ ] Test für Erstellung mit Teilfehler bei Labels ist grün und prüft auf `label_errors`.
+- [x] Test für erfolgreiche Erstellung inkl. Labels ist grün.
+- [x] Test für Erstellung mit Teilfehler bei Labels ist grün und prüft auf `label_errors`.
 
 ## Testing Strategy
 
@@ -187,23 +187,25 @@ uv run pytest tests/test_server.py -k create_task
 Start des MCP Servers (`uv run altiplano`) und Aufruf von `create_task` via Inspector mit einer gültigen und einer ungültigen Label-ID.
 
 ## Acceptance Criteria
-
-- [ ] Feature implementiert alle Scope-Anforderungen
-- [ ] Typvalidierung und API-Fehlerbehandlung sind korrekt
-- [ ] Relevante pytest-Tests sind ergänzt und grün
-- [ ] Manuelle Flows validierbar
-- [ ] Dokumentationsbedarf notiert
-
+ 
+- [x] Feature implementiert alle Scope-Anforderungen
+- [x] Typvalidierung und API-Fehlerbehandlung sind korrekt
+- [x] Relevante pytest-Tests sind ergänzt und grün
+- [x] Manuelle Flows validierbar
+- [x] Dokumentationsbedarf notiert
+ 
 ## Completion Checklist
-
-- [ ] Alle Tasks sind umgesetzt
-- [ ] Jeder Task wurde validiert
-- [ ] Alle relevanten Tests laufen erfolgreich
-- [ ] Feature ist bereit für `/document` und `/commit`
+ 
+- [x] Alle Tasks sind umgesetzt
+- [x] Jeder Task wurde validiert
+- [x] Alle relevanten Tests laufen erfolgreich
+- [x] Feature ist bereit für `/document` und `/commit`
 
 ## Documentation Notes
-
-Endanwender sollten in der Usage-Dokumentation (sofern es eine gibt) darauf hingewiesen werden, dass sie Labels nun in einem Schritt zuweisen können.
+ 
+Folgende Dokumente wurden erstellt:
+- [User Guide](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/labels-in-create-task/user-guide.md) – Beschreibung der Tool-Bedienung und ein Demo-Ablauf.
+- [Developer Notes](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/labels-in-create-task/developer-notes.md) – Technische Details, Architektur, Datenfluss und Validierungsergebnisse.
 
 ## Notes and Trade-offs
 

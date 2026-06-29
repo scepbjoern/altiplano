@@ -1039,5 +1039,85 @@ def test_main_transport_selection(monkeypatch):
         mcp.settings.transport_security.enable_dns_rebinding_protection = orig_dns_rebinding
 
 
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_create_task_no_labels(mock_request):
+    """Test create_task without label_ids."""
+    mock_request.return_value = {
+        "id": 100,
+        "title": "Task without labels",
+        "description": "Desc",
+        "priority": 1,
+    }
+    
+    from altiplano.server import create_task
+    result = await create_task(project_id=1, title="Task without labels", description="Desc", priority=1)
+    
+    assert result["id"] == 100
+    assert "label_errors" not in result
+    mock_request.assert_called_once_with(
+        "PUT",
+        "/projects/1/tasks",
+        json={"title": "Task without labels", "description": "Desc", "priority": 1}
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_create_task_with_labels_success(mock_request):
+    """Test create_task with labels successfully added."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "PUT" and path == "/projects/1/tasks":
+            return {"id": 100, "title": "Task with labels"}
+        if method == "PUT" and path.startswith("/tasks/100/labels"):
+            return {"ok": True}
+        return {}
+        
+    mock_request.side_effect = mock_request_side_effect
+    
+    from altiplano.server import create_task
+    result = await create_task(project_id=1, title="Task with labels", label_ids=[5, 6])
+    
+    assert result["id"] == 100
+    assert "label_errors" not in result
+    
+    # Assert calls
+    mock_request.assert_any_call("PUT", "/projects/1/tasks", json={"title": "Task with labels"})
+    mock_request.assert_any_call("PUT", "/tasks/100/labels", json={"label_id": 5})
+    mock_request.assert_any_call("PUT", "/tasks/100/labels", json={"label_id": 6})
+    assert mock_request.call_count == 3
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_create_task_with_labels_partial_error(mock_request):
+    """Test create_task where some label additions fail but task is still created."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "PUT" and path == "/projects/1/tasks":
+            return {"id": 100, "title": "Task with label error"}
+        if method == "PUT" and path == "/tasks/100/labels":
+            label_id = kwargs.get("json", {}).get("label_id")
+            if label_id == 6:
+                raise RuntimeError("Vikunja API error 404: Label not found")
+            return {"ok": True}
+        return {}
+        
+    mock_request.side_effect = mock_request_side_effect
+    
+    from altiplano.server import create_task
+    result = await create_task(project_id=1, title="Task with label error", label_ids=[5, 6])
+    
+    assert result["id"] == 100
+    assert "label_errors" in result
+    assert len(result["label_errors"]) == 1
+    assert "Label not found" in result["label_errors"][0]
+    
+    mock_request.assert_any_call("PUT", "/projects/1/tasks", json={"title": "Task with label error"})
+    mock_request.assert_any_call("PUT", "/tasks/100/labels", json={"label_id": 5})
+    mock_request.assert_any_call("PUT", "/tasks/100/labels", json={"label_id": 6})
+    assert mock_request.call_count == 3
+
+
+
 
 

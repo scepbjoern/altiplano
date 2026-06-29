@@ -256,12 +256,14 @@ async def create_task(
     due_date: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
+    label_ids: list[int] | None = None,
 ) -> dict:
     """Create a task in a project.
 
     `start_date` and `end_date` are ISO 8601 datetimes marking the window you
     plan to work on the task (start work / finish work), distinct from
     `due_date` (the deadline).
+    Use `label_ids` to attach labels directly to the task.
     """
     payload: dict[str, Any] = {"title": title}
     if description is not None:
@@ -274,7 +276,19 @@ async def create_task(
         payload["start_date"] = start_date
     if end_date is not None:
         payload["end_date"] = end_date
-    return await _request("PUT", f"/projects/{project_id}/tasks", json=payload)
+    res = await _request("PUT", f"/projects/{project_id}/tasks", json=payload)
+
+    if label_ids:
+        errors = []
+        for label_id in label_ids:
+            try:
+                await _request("PUT", f"/tasks/{res['id']}/labels", json={"label_id": label_id})
+            except RuntimeError as exc:
+                errors.append(str(exc))
+        if errors:
+            res["label_errors"] = errors
+
+    return res
 
 
 @mcp.tool()
