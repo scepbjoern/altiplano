@@ -14,6 +14,7 @@
 
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
+| Labels in create_task | planned | [plan](docs/project/features/labels-in-create-task/plan-v001.md) | 2026-06-29 |
 
 ## Abgeschlossene Features
 
