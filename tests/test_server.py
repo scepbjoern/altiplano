@@ -14,7 +14,8 @@ async def test_mcp_initialization():
     expected_tools = [
         "list_projects",
         "create_project",
-        "list_tasks",
+        "search_tasks",
+        "get_bucket_tasks",
         "get_task",
         "create_task",
         "update_task",
@@ -1116,6 +1117,107 @@ async def test_tool_create_task_with_labels_partial_error(mock_request):
     mock_request.assert_any_call("PUT", "/tasks/100/labels", json={"label_id": 5})
     mock_request.assert_any_call("PUT", "/tasks/100/labels", json={"label_id": 6})
     assert mock_request.call_count == 3
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_search_tasks_isolated_text(mock_request):
+    """Test search_tasks with only text query, using the s query parameter."""
+    mock_request.return_value = [{"id": 1, "title": "Tandoor Recipe", "done": False}]
+    
+    from altiplano.server import search_tasks
+    result = await search_tasks(text="Tandoor")
+    
+    assert len(result) == 1
+    assert result[0]["title"] == "Tandoor Recipe"
+    mock_request.assert_called_once_with(
+        "GET",
+        "/tasks",
+        params={
+            "page": 1,
+            "per_page": 50,
+            "s": "Tandoor",
+            "filter_timezone": "Europe/Zurich"
+        }
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_search_tasks_combined(mock_request):
+    """Test search_tasks with text search combined with structured filters."""
+    mock_request.return_value = []
+    
+    from altiplano.server import search_tasks
+    await search_tasks(
+        text="Tandoor",
+        done=False,
+        project_id=12,
+        priority_min=4,
+        label_ids=[1, 2]
+    )
+    
+    mock_request.assert_called_once_with(
+        "GET",
+        "/tasks",
+        params={
+            "page": 1,
+            "per_page": 50,
+            "filter": "project = 12 && done = false && labels in 1, 2 && priority >= 4 && (title ~ 'Tandoor' || description ~ 'Tandoor')",
+            "filter_timezone": "Europe/Zurich"
+        }
+    )
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_search_tasks_sorting_validation(mock_request):
+    """Test search_tasks validation of sort_by and order_by parameters."""
+    from altiplano.server import search_tasks
+    
+    # Validation error if order_by specified without sort_by
+    with pytest.raises(ValueError, match="sort_by is required when order_by is specified"):
+        await search_tasks(order_by=["asc"])
+        
+    # Validation error if mismatch in lengths
+    with pytest.raises(ValueError, match="order_by and sort_by must have the same length"):
+        await search_tasks(sort_by=["due_date", "priority"], order_by=["asc"])
+
+    # Validation error if invalid order_by value
+    with pytest.raises(ValueError, match="order_by values must be 'asc' or 'desc'"):
+        await search_tasks(sort_by=["due_date"], order_by=["invalid"])
+
+
+@pytest.mark.anyio
+@patch("altiplano.server._request", new_callable=AsyncMock)
+async def test_tool_get_bucket_tasks(mock_request):
+    """Test get_bucket_tasks resolves view_id and fetches tasks with bucket filter."""
+    async def mock_request_side_effect(method, path, **kwargs):
+        if method == "GET" and path == "/projects/1/views":
+            return [{"id": 10, "view_kind": "kanban"}]
+        if method == "GET" and path == "/projects/1/views/10/tasks":
+            return [{"id": 42, "title": "Bucket Task", "bucket_id": 20}]
+        return {}
+    mock_request.side_effect = mock_request_side_effect
+    
+    from altiplano.server import get_bucket_tasks
+    result = await get_bucket_tasks(project_id=1, bucket_id=20)
+    
+    assert len(result) == 1
+    assert result[0]["title"] == "Bucket Task"
+    
+    mock_request.assert_any_call("GET", "/projects/1/views")
+    mock_request.assert_any_call(
+        "GET",
+        "/projects/1/views/10/tasks",
+        params={
+            "filter": "bucket_id = 20",
+            "sort_by": "position",
+            "order_by": "asc",
+            "page": 1,
+            "per_page": 50
+        }
+    )
 
 
 

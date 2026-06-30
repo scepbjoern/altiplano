@@ -43,33 +43,38 @@ Ersatz des bisherigen projektbezogenen `list_tasks`-Tools durch eine leistungsst
 ## 3. Tasks
 
 ### TASK 1: Implementierung `search_tasks` in `server.py`
-- **STATUS:** planned
+- **STATUS:** done
 - **IMPLEMENT:**
   - Entferne `list_tasks`.
   - Füge `@mcp.tool()` `search_tasks` mit den im PRD beschriebenen Argumenten hinzu.
   - Implementiere die Filterstring-Konstruktion.
   - Sende GET-Request an `/api/v1/tasks`.
 - **VALIDATE:**
-  - **Manuell:** Starte `uv run altiplano` und nutze Inspector, um nach Tasks zu suchen (mit und ohne Filter).
+  - **Automatisiert:** `test_tool_search_tasks_isolated_text`, `test_tool_search_tasks_combined` und `test_tool_search_tasks_sorting_validation` in `test_server.py` erfolgreich ausgeführt.
 
 ### TASK 2: Implementierung `get_bucket_tasks` in `server.py`
-- **STATUS:** planned
+- **STATUS:** done
 - **IMPLEMENT:**
   - Füge `@mcp.tool()` `get_bucket_tasks` hinzu.
   - Löse `view_id` auf, wenn fehlend.
   - Rufe Views/Tasks ab und filtere nach `bucket_id`.
 - **VALIDATE:**
-  - **Manuell:** Starte Server und rufe Tasks für einen bestehenden Bucket ab.
+  - **Automatisiert:** `test_tool_get_bucket_tasks` in `test_server.py` erfolgreich ausgeführt.
 
 ### TASK 3: API-Mocks und Tests in `test_server.py` anpassen
-- **STATUS:** planned
+- **STATUS:** done
 - **IMPLEMENT:**
   - Entferne etwaige Erwähnungen von `list_tasks` aus `test_server.py` (z.B. in `test_mcp_initialization`).
   - Füge API-Mock-Tests für `search_tasks` hinzu, um die korrekte Bildung des `filter`-Strings zu überprüfen.
   - Füge API-Mock-Tests für `get_bucket_tasks` hinzu.
 - **VALIDATE:**
-  - **Automatisiert:** `uv run pytest` (Muss erfolgreich durchlaufen).
+  - **Automatisiert:** `uv run pytest` wurde erfolgreich ausgeführt (45 tests passed).
 
 ## 4. Plan Quality Score
 **Score: 9/10**
 - Der Plan ist umsetzbar, berücksichtigt die API-Logik und die bestehende Architektur. Die offenen Fragen aus dem PRD wurden mit pragmatischen Annahmen beantwortet (z.B. `<` für Datumsvergleiche, `in` für Arrays), die während der Implementierung leicht anpassbar sind.
+
+## 5. Documentation Results
+Folgende Dokumente wurden im Zuge dieses Features erstellt:
+- [user-guide.md](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/erweiterte-task-suche-und-bucket-tasks/user-guide.md): Anleitung für Endanwender zur Verwendung von `search_tasks` und `get_bucket_tasks`.
+- [developer-notes.md](file:///e:/bjoer/Documents/repos/altiplano/docs/project/features/erweiterte-task-suche-und-bucket-tasks/developer-notes.md): Technische Notizen zur API-Struktur und zum Testaufbau.

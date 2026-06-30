@@ -110,6 +110,8 @@ def _task_summary(t: dict) -> dict:
         "title": t.get("title"),
         "done": t.get("done"),
         "priority": t.get("priority"),
+        "due_date": t.get("due_date"),
+        "project_id": t.get("project_id"),
     }
 
 
@@ -219,25 +221,163 @@ async def update_project(
 # --- tasks ------------------------------------------------------------------
 ##
 @mcp.tool()
-async def list_tasks(
-    project_id: int,
+async def search_tasks(
+    text: str | None = None,
     filter: str | None = None,
-    sort_by: str | None = None,
+    project_id: int | None = None,
+    done: bool | None = None,
+    title_contains: str | None = None,
+    description_contains: str | None = None,
+    label_ids: list[int] | None = None,
+    assignee_ids: list[int] | None = None,
+    priority_min: int | None = None,
+    priority_max: int | None = None,
+    due_before: str | None = None,
+    due_after: str | None = None,
+    start_before: str | None = None,
+    start_after: str | None = None,
+    end_before: str | None = None,
+    end_after: str | None = None,
+    done_before: str | None = None,
+    done_after: str | None = None,
+    created_before: str | None = None,
+    created_after: str | None = None,
+    updated_before: str | None = None,
+    updated_after: str | None = None,
+    percent_done_min: int | None = None,
+    percent_done_max: int | None = None,
+    sort_by: list[str] | None = None,
+    order_by: list[str] | None = None,
     page: int = 1,
     per_page: int = 50,
+    expand: list[str] | None = None,
+    filter_timezone: str | None = "Europe/Zurich",
+    filter_include_nulls: bool | None = None,
 ) -> list[dict]:
-    """List tasks in a project.
+    """Search and filter tasks globally across all projects.
 
-    `filter` and `sort_by` are passed to Vikunja and applied server-side, e.g.
-    filter="done = false && priority >= 4", sort_by="priority". Vikunja filters
-    then paginates, so results are complete regardless of page size.
+    Provide comfort parameters for filtering, which are combined into a single
+    Vikunja filter string. Simple search term in `text` uses global search.
     """
+    # Komfort-Filter in Vikunja-Filterausdrücke übersetzen
+    filters: list[str] = []
+
+    if filter is not None:
+        filters.append(filter)
+    if project_id is not None:
+        filters.append(f"project = {project_id}")
+    if done is not None:
+        filters.append(f"done = {str(done).lower()}")
+    if title_contains is not None:
+        escaped_title = title_contains.replace("'", "\\'")
+        filters.append(f"title ~ '{escaped_title}'")
+    if description_contains is not None:
+        escaped_desc = description_contains.replace("'", "\\'")
+        filters.append(f"description ~ '{escaped_desc}'")
+    
+    if label_ids:
+        if len(label_ids) == 1:
+            filters.append(f"labels = {label_ids[0]}")
+        else:
+            ids_str = ", ".join(str(i) for i in label_ids)
+            filters.append(f"labels in {ids_str}")
+
+    if assignee_ids:
+        if len(assignee_ids) == 1:
+            filters.append(f"assignees = {assignee_ids[0]}")
+        else:
+            ids_str = ", ".join(str(i) for i in assignee_ids)
+            filters.append(f"assignees in {ids_str}")
+
+    if priority_min is not None:
+        filters.append(f"priority >= {priority_min}")
+    if priority_max is not None:
+        filters.append(f"priority <= {priority_max}")
+
+    if due_before is not None:
+        filters.append(f"due_date < '{due_before}'")
+    if due_after is not None:
+        filters.append(f"due_date > '{due_after}'")
+
+    if start_before is not None:
+        filters.append(f"start_date < '{start_before}'")
+    if start_after is not None:
+        filters.append(f"start_date > '{start_after}'")
+
+    if end_before is not None:
+        filters.append(f"end_date < '{end_before}'")
+    if end_after is not None:
+        filters.append(f"end_date > '{end_after}'")
+
+    if done_before is not None:
+        filters.append(f"done_at < '{done_before}'")
+    if done_after is not None:
+        filters.append(f"done_at > '{done_after}'")
+
+    if created_before is not None:
+        filters.append(f"created < '{created_before}'")
+    if created_after is not None:
+        filters.append(f"created > '{created_after}'")
+
+    if updated_before is not None:
+        filters.append(f"updated < '{updated_before}'")
+    if updated_after is not None:
+        filters.append(f"updated > '{updated_after}'")
+
+    if percent_done_min is not None:
+        filters.append(f"percent_done >= {percent_done_min}")
+    if percent_done_max is not None:
+        filters.append(f"percent_done <= {percent_done_max}")
+
+    # Textsuche-Logik verarbeiten
+    text_s_param: str | None = None
+    if text is not None:
+        if not filters:
+            # Isolierte Textsuche: Verwende den s-Parameter von Vikunja
+            text_s_param = text
+        else:
+            # Kombinierte Textsuche: In title/description-Match übersetzen
+            escaped_text = text.replace("'", "\\'")
+            filters.append(f"(title ~ '{escaped_text}' || description ~ '{escaped_text}')")
+
+    filter_str = " && ".join(filters) if filters else None
+
+    # Query-Parameter vorbereiten
     params: dict[str, Any] = {"page": page, "per_page": per_page}
-    if filter:
-        params["filter"] = filter
+    if filter_str:
+        params["filter"] = filter_str
+    if text_s_param:
+        params["s"] = text_s_param
+
+    # Sortierung validieren und setzen
+    if order_by:
+        if not sort_by:
+            raise ValueError("sort_by is required when order_by is specified")
+        if len(order_by) != len(sort_by):
+            raise ValueError("order_by and sort_by must have the same length")
+        for order in order_by:
+            if order not in ("asc", "desc"):
+                raise ValueError("order_by values must be 'asc' or 'desc'")
+
     if sort_by:
         params["sort_by"] = sort_by
-    data = await _request("GET", f"/projects/{project_id}/tasks", params=params)
+    if order_by:
+        params["order_by"] = order_by
+
+    # Expand validieren und setzen
+    if expand:
+        allowed_expands = {"subtasks", "buckets", "reactions", "comments"}
+        for exp in expand:
+            if exp not in allowed_expands:
+                raise ValueError(f"Invalid expand value: {exp}. Allowed: {allowed_expands}")
+        params["expand"] = expand
+
+    if filter_timezone:
+        params["filter_timezone"] = filter_timezone
+    if filter_include_nulls is not None:
+        params["filter_include_nulls"] = filter_include_nulls
+
+    data = await _request("GET", "/tasks", params=params)
     return [_task_summary(t) for t in (data or [])]
 
 
@@ -419,6 +559,31 @@ async def list_buckets(project_id: int) -> list[dict]:
         }
         for b in (data or [])
     ]
+
+
+@mcp.tool()
+async def get_bucket_tasks(
+    project_id: int,
+    bucket_id: int,
+    view_id: int | None = None,
+    page: int = 1,
+    per_page: int = 50,
+) -> list[dict]:
+    """Get tasks of a specific Kanban bucket in a project, ordered by position."""
+    # Kanban-View auflösen, falls nicht übergeben
+    if view_id is None:
+        view_id = await _resolve_kanban_view_id(project_id)
+
+    # Tasks für die Kanban-View filtriert nach bucket_id abrufen, sortiert nach Position
+    params: dict[str, Any] = {
+        "filter": f"bucket_id = {bucket_id}",
+        "sort_by": "position",
+        "order_by": "asc",
+        "page": page,
+        "per_page": per_page,
+    }
+    data = await _request("GET", f"/projects/{project_id}/views/{view_id}/tasks", params=params)
+    return [_task_summary(t) for t in (data or [])]
 
 
 @mcp.tool()

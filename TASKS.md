@@ -14,11 +14,11 @@
  
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
-| Erweiterte Task-Suche und Bucket-Tasks | planned | [plan](docs/project/features/erweiterte-task-suche-und-bucket-tasks/plan-v001.md) | 2026-06-30 |
 ## Abgeschlossene Features
  
 | Feature | Datei | Abgeschlossen |
 |---|---|---|
+| Erweiterte Task-Suche und Bucket-Tasks | [plan](docs/project/features/erweiterte-task-suche-und-bucket-tasks/plan-v001.md) | 2026-06-30 |
 | Labels in create_task | [plan](docs/project/features/labels-in-create-task/plan-v001.md) | 2026-06-29 |
 | Project Identifier | [plan](docs/project/features/project-identifier/plan-v001.md) | 2026-06-29 |
 | Globales Label Management | [plan](docs/project/features/globales-label-management/plan-v001.md) | 2026-06-25 |
