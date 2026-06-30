@@ -14,7 +14,7 @@
  
 | Feature | Status | Datei | Erstellt |
 |---|---|---|---|
- 
+| Erweiterte Task-Suche und Bucket-Tasks | planned | [plan](docs/project/features/erweiterte-task-suche-und-bucket-tasks/plan-v001.md) | 2026-06-30 |
 ## Abgeschlossene Features
  
 | Feature | Datei | Abgeschlossen |
