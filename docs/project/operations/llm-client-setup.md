@@ -1,7 +1,7 @@
 # LLM-Client Setup Guide – Altiplano MCP Server
 
 Dieser Guide beschreibt, wie du die gängigen LLM-Clients so konfigurierst, dass sie
-den Altiplano MCP-Server über die externe HTTPS-URL (`https://mcp-tasks.melbjo.win/sse`)
+den Altiplano MCP-Server über die externe HTTPS-URL (`https://tasks-mcp.melbjo.win/sse`)
 nutzen können. Da der Server hinter Cloudflare Access (Zero Trust) abgesichert ist,
 müssen bei jeder Anfrage die Service-Token-Header mitgeschickt werden.
 
@@ -58,14 +58,14 @@ Füge folgenden Eintrag in das `mcpServers`-Objekt ein (ersetze die Platzhalter)
 ```json
 {
   "mcpServers": {
-    "altiplano-vikunja": {
+    "vikunja-tasks": {
       "command": "cmd",
       "args": [
         "/c",
         "npx",
         "-y",
         "mcp-remote",
-        "https://mcp-tasks.melbjo.win/sse",
+        "https://tasks-mcp.melbjo.win/sse",
         "--header",
         "CF-Access-Client-Id: <deine-client-id>",
         "--header",
@@ -80,12 +80,12 @@ Füge folgenden Eintrag in das `mcpServers`-Objekt ein (ersetze die Platzhalter)
 ```json
 {
   "mcpServers": {
-    "altiplano-vikunja": {
+    "vikunja-tasks": {
       "command": "npx",
       "args": [
         "-y",
         "mcp-remote",
-        "https://mcp-tasks.melbjo.win/sse",
+        "https://tasks-mcp.melbjo.win/sse",
         "--header",
         "CF-Access-Client-Id: <deine-client-id>",
         "--header",
@@ -102,7 +102,7 @@ Füge folgenden Eintrag in das `mcpServers`-Objekt ein (ersetze die Platzhalter)
 ### 1.4 Claude Desktop neu starten
 
 Claude Desktop **vollständig beenden** (nicht nur das Fenster schliessen) und neu starten.
-Nach dem Start sollte unter **Settings → Developer** der Server `altiplano-vikunja` als
+Nach dem Start sollte unter **Settings → Developer** der Server `vikunja-tasks` als
 verbunden angezeigt werden.
 
 ---
@@ -127,9 +127,9 @@ ChatGPT unterstützt Remote-MCP-Server über das Cloudflare MCP Server Portal un
 2. Aktivieren Sie den **Developer Mode** (Entwicklermodus).
 3. Klicken Sie auf **Create** / **+ Custom Connector**.
 4. Geben Sie folgende Details ein:
-   * **Name**: `Vikunja Altiplano`
+   * **Name**: `Vikunja Tasks`
    * **Connection**: Wählen Sie `Server URL` und tragen Sie die Portal-Client-URL ein:
-     **`https://mcp.melbjo.win/mcp`** *(WICHTIG: Das Suffix `/mcp` am Ende ist zwingend erforderlich, damit der Streamable-HTTP-Transport genutzt wird).*
+     **`https://tasks-mcp-portal.melbjo.win/mcp`** *(WICHTIG: Dies ist die Portal-URL, nicht die direkte Origin-URL. Das Suffix `/mcp` am Ende ist zwingend erforderlich, damit der Streamable-HTTP-Transport genutzt wird).*
    * **Authentication**: Wählen Sie **OAuth** aus der Liste.
 5. ChatGPT führt im Hintergrund die Auto-Discovery durch und lädt alle nötigen OAuth-Endpunkte selbstständig vom Portal.
 6. Setzen Sie das Häkchen bei *„I understand and want to continue“* und klicken Sie auf **Create**.
@@ -174,14 +174,14 @@ Füge folgenden Abschnitt in die `config.toml` ein:
 
 **Unter Windows:**
 ```toml
-[mcp_servers.altiplano-vikunja]
+[mcp_servers.vikunja-tasks]
 command = "cmd"
 args = [
   "/c",
   "npx",
   "-y",
   "mcp-remote",
-  "https://mcp-tasks.melbjo.win/sse",
+  "https://tasks-mcp.melbjo.win/sse",
   "--header",
   "CF-Access-Client-Id: <deine-client-id>",
   "--header",
@@ -191,12 +191,12 @@ args = [
 
 **Unter macOS / Linux:**
 ```toml
-[mcp_servers.altiplano-vikunja]
+[mcp_servers.vikunja-tasks]
 command = "npx"
 args = [
   "-y",
   "mcp-remote",
-  "https://mcp-tasks.melbjo.win/sse",
+  "https://tasks-mcp.melbjo.win/sse",
   "--header",
   "CF-Access-Client-Id: <deine-client-id>",
   "--header",
@@ -223,7 +223,7 @@ indem du `curl` mit den entsprechenden Headern verwendest:
 curl -i \
   -H "CF-Access-Client-Id: <deine-client-id>" \
   -H "CF-Access-Client-Secret: <dein-client-secret>" \
-  https://mcp-tasks.melbjo.win/sse
+  https://tasks-mcp.melbjo.win/sse
 ```
 
 **Erwartete Antwort:**
@@ -237,12 +237,18 @@ Ohne die korrekten Header antwortet Cloudflare mit `403 Forbidden`.
 
 ## 6. Troubleshooting
 
-### `403 Forbidden` vom Server
+### ChatGPT sieht keine Tools
+
+- **Prüfe:** Portal-URL in ChatGPT prüfen (`https://tasks-mcp-portal.melbjo.win/mcp` inkl. `/mcp` am Ende).
+- **Prüfe:** OAuth-Verbindung in ChatGPT neu autorisieren.
+- **Prüfe:** Falls der direkte Origin funktioniert, ChatGPT aber nicht: Cloudflare MCP Portal Einstellungen, Managed OAuth, Allowed Redirect URIs und Server-Policy prüfen.
+
+### `403 Forbidden` vom direkten Origin (Claude / Codex)
 
 Die Cloudflare Access Policy blockiert die Anfrage.
 
 - **Prüfe:** Sind `CF-Access-Client-Id` und `CF-Access-Client-Secret` korrekt und vollständig?
-- **Prüfe:** Ist der Service Token in Cloudflare noch aktiv (nicht abgelaufen)?
+- **Prüfe:** Ist der Service Token `svc-mcp-tasks` in Cloudflare noch aktiv (nicht abgelaufen)?
 - **Prüfe:** Ist der Service Token in der Access Policy der Application eingetragen?
 
 ### `Connection refused` / Timeout
